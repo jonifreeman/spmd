@@ -1,6 +1,6 @@
 package spmd
 
-object Daemon {
+object Spmd {
   def main(args: Array[String]) = {
     // Start listening
     Server
