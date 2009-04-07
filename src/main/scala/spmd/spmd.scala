@@ -1,15 +1,5 @@
 package spmd
 
-
-/*
- * http://www.nabble.com/epmd-not-cleaning-up-node-name-if-node-is-down.-td18996856.html
-The normal and correct behaviour is that a node is unregistered from
-epmd when it is shutdown.
-each Erlang node that register to epmd establishes and keep an open
-tcp connection towards epmd.
-When that connection is broken the Erlang node is unregistered.
-*/
-
 object Daemon {
   def main(args: Array[String]) = {
     // Start listening
@@ -42,12 +32,24 @@ object Server {
     def act {
       val out = new PrintWriter(clientSocket.getOutputStream, true)
       val in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream))
-      val request = Request.fromRequestLine(in.readLine)
-      request match {
-        case Request(PUT, "nodes" :: node :: ip :: port :: Nil) => println(node)
-        case Request(GET, "nodes" :: node :: ip :: port :: Nil) => println(node) // FIXME remove
+      val req = Request.fromRequestLine(in.readLine)
+      val res = req match {
+        case Request(PUT, "nodes" :: node :: ip :: port :: Nil) => Response(OK, "{ ok }")
+        case Request(GET, "nodes" :: node :: ip :: port :: Nil) => Response(OK, "{ ok }") // Remove
+        case _ => Response(NotFound, "")
       }
+      println(res.toString)
+      out.write(res.toString)
+      out.flush
+      out.close
     }
+  }
+
+  case class Response(status: Status, body: String) {
+    override def toString = 
+      "HTTP/1.0 " + status.code + " " + status.toString + "\r\n" +
+      "Content-Type: application/json\r\n" +
+      body + "\r\n"
   }
 
   case class Request(method: Method, url: List[String])
@@ -55,8 +57,8 @@ object Server {
     def fromRequestLine(s: String) = {
       val elems = s.split(" ")
       (elems(0), elems(1).split("/").filter(!_.isEmpty).toList) match {
-        case ("PUT", url) => Request(PUT, url)
-        case ("GET", url) => Request(GET, url)
+        case ("PUT", url) => new Request(PUT, url)
+        case ("GET", url) => new Request(GET, url)
         case _ => error("unknown method: " + s)
       }
     }
@@ -65,4 +67,12 @@ object Server {
   sealed abstract class Method
   case object PUT extends Method
   case object GET extends Method
+
+  sealed abstract class Status(val code: Int)
+  case object OK extends Status(200) {
+    override def toString = "OK"
+  }
+  case object NotFound extends Status(404) {
+    override def toString = "Not Found"
+  }
 }
