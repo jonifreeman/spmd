@@ -37,13 +37,16 @@ object Server {
   val out = new PrintWriter(clientSocket.getOutputStream, true)
   val in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream))
   val request = Request.fromRequestLine(in.readLine)
-  println(request)
+  request match {
+    case Request(PUT, "nodes" :: node :: ip :: port :: Nil) => println(node)
+    case Request(GET, "nodes" :: node :: ip :: port :: Nil) => println(node) // FIXME remove
+  }
 
-  case class Request(method: Method, url: String)
+  case class Request(method: Method, url: List[String])
   case object Request {
     def fromRequestLine(s: String) = {
       val elems = s.split(" ")
-      (elems(0), elems(1)) match {
+      (elems(0), elems(1).split("/").filter(!_.isEmpty).toList) match {
         case ("PUT", url) => Request(PUT, url)
         case ("GET", url) => Request(GET, url)
         case _ => error("unknown method: " + s)
