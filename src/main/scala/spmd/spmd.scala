@@ -12,7 +12,7 @@ When that connection is broken the Erlang node is unregistered.
 
 object Daemon {
   def main(args: Array[String]) = {
-    // Start listening, http?
+    // Start listening
     Server
     // Establish client conn
     // API, json?
@@ -30,16 +30,24 @@ trait Client {
 object Server {
   import java.io._
   import java.net._
-  import scala.io.Source
+  import scala.actors.Actor
 
   val serverSocket = new ServerSocket(6128)
-  val clientSocket = serverSocket.accept
-  val out = new PrintWriter(clientSocket.getOutputStream, true)
-  val in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream))
-  val request = Request.fromRequestLine(in.readLine)
-  request match {
-    case Request(PUT, "nodes" :: node :: ip :: port :: Nil) => println(node)
-    case Request(GET, "nodes" :: node :: ip :: port :: Nil) => println(node) // FIXME remove
+
+  while (true) {
+    new Handler(serverSocket.accept).start    
+  }
+
+  class Handler(clientSocket: Socket) extends Actor {
+    def act {
+      val out = new PrintWriter(clientSocket.getOutputStream, true)
+      val in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream))
+      val request = Request.fromRequestLine(in.readLine)
+      request match {
+        case Request(PUT, "nodes" :: node :: ip :: port :: Nil) => println(node)
+        case Request(GET, "nodes" :: node :: ip :: port :: Nil) => println(node) // FIXME remove
+      }
+    }
   }
 
   case class Request(method: Method, url: List[String])
