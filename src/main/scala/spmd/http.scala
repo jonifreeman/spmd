@@ -2,6 +2,7 @@ package spmd
 
 import java.io._
 import java.net._
+import scala.io.Source
 
 object Http {
   class Client(addr: String, port: Int) {
@@ -38,6 +39,9 @@ object Http {
         println(res.toString)
         out.write(res.toString)
         out.flush
+
+        // FIXME do not block for all requests
+        Source.fromInputStream(clientSocket.getInputStream).getLines
       }
     }
   }
