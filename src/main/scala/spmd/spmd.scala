@@ -1,20 +1,17 @@
 package spmd
 
 object Spmd extends Http.Server {
-  import scala.actors.Actor._
   import Http._
+  import scala.collection.mutable.{HashMap, SynchronizedMap}
 
-  val nodes = actor {
-    loop {
-      react {
-        case 'nodes => ""
-      }
-    }
-  }
+  val nodes = new HashMap[String, Node]() with SynchronizedMap[String, Node]
 
   def actions = {
-    case Request(PUT, "nodes" :: name :: ip :: port :: Nil, _) => Response(OK, "{ ok }", true)
-    case Request(GET, "nodes" :: Nil, _) => Response(OK, """{ "nodes": []  }""", false)
+    case Request(PUT, "nodes" :: name :: address :: port :: Nil, _) => 
+      nodes += (name -> Node(name, address, port.toInt))
+      Response(OK, "{ ok }", true)
+    case Request(GET, "nodes" :: Nil, _) => 
+      Response(OK, "{ \"nodes\": [" + nodes.values.mkString(",") + "]  }", false)
   }
 
   def main(args: Array[String]) = {
@@ -22,13 +19,18 @@ object Spmd extends Http.Server {
   }
 }
 
-case class Node(name: String, address: String, port: Int)
+case class Node(name: String, address: String, port: Int) {
+  def toJson = " { \"name\": "+name+", \"address\": "+address+", \"port\": "+port+" } "
+}
 
 trait Client {
   val http = new Http.Client("localhost", 6128)
 
 //  def names(host: HostName)
-  def names = http.send(http.get("/nodes"))
+  def names = {
+    val nodes = http.send(http.get("/nodes"))
+    println(nodes)
+  }
 
   def registerNode(node: Node) = {
     val t = new Thread(new Runnable {
