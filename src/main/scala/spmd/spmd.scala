@@ -1,21 +1,39 @@
 package spmd
 
-object Spmd {
+object Spmd extends Http.Server {
+  import scala.actors.Actor._
+  import Http._
+
+  val nodes = actor {
+    loop {
+      react {
+        case 'nodes => ""
+      }
+    }
+  }
+
+  def actions = {
+    case Request(PUT, "nodes" :: name :: ip :: port :: Nil, _) => Response(OK, "{ ok }", true)
+    case Request(GET, "nodes" :: Nil, _) => Response(OK, """{ "nodes": []  }""", false)
+  }
+
   def main(args: Array[String]) = {
-    Http.Server.start
+    start
   }
 }
 
-trait Client {
-  import scala.actors.remote.Node
+case class Node(name: String, address: String, port: Int)
 
-//  def names = names(inet.getHostName)
+trait Client {
+  val http = new Http.Client("localhost", 6128)
+
 //  def names(host: HostName)
-  def registerNode(name: String, node: Node) = {
+  def names = http.send(http.get("/nodes"))
+
+  def registerNode(node: Node) = {
     val t = new Thread(new Runnable {
       def run {
-        val http = new Http.Client("localhost", 6128)
-        val req = http.put("/nodes/" + name + "/" + node.address + "/" + node.port, "")
+        val req = http.put("/nodes/" + node.name + "/" + node.address + "/" + node.port, "")
         http.send(req)
       }
     })

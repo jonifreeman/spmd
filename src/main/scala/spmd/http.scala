@@ -7,6 +7,7 @@ import scala.io.Source
 object Http {
   class Client(addr: String, port: Int) {
     def put(url: String, body: String) = Request.from(PUT, url, body)
+    def get(url: String) = Request.from(GET, url, "")
     
     def send(req: Request) = {
       val socket = new Socket(addr, port)
@@ -17,7 +18,10 @@ object Http {
     }
   }
   
-  object Server {
+  trait Server {    
+    def actions: PartialFunction[Request, Response]
+    val notFound: PartialFunction[Request, Response] = { case _ => Response(NotFound, "", false) }
+
     def start {
       val serverSocket = new ServerSocket(6128)
     
@@ -31,22 +35,18 @@ object Http {
         val out = new PrintWriter(clientSocket.getOutputStream, true)
         val in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream))
         val req = Request.fromRequestLine(in.readLine)
-        val res = req match {
-          case Request(PUT, "nodes" :: name :: ip :: port :: Nil, _) => Response(OK, "{ ok }")
-          case Request(GET, "nodes" :: Nil, _) => Response(OK, "{ ok }")
-          case _ => Response(NotFound, "")
-        }
+        val action = actions.orElse(notFound)
+        val res = action(req)
         println(res.toString)
         out.write(res.toString)
         out.flush
 
-        // FIXME do not block for all requests
-        Source.fromInputStream(clientSocket.getInputStream).getLines
+        if (res.blocking) Source.fromInputStream(clientSocket.getInputStream).getLines
       }
     }
   }
 
-  case class Response(status: Status, body: String) {
+  case class Response(status: Status, body: String, blocking: Boolean) {
     override def toString = 
       "HTTP/1.0 " + status.code + " " + status.toString + "\r\n" +
       "Content-Type: application/json\r\n" +
@@ -64,7 +64,7 @@ object Http {
       }
     }
 
-    def from(method: Method, url: String, body: String) = new Request(PUT, split(url), body)
+    def from(method: Method, url: String, body: String) = new Request(method, split(url), body)
     private def split(url: String) = url.split("/").filter(!_.isEmpty).toList
   }
   
