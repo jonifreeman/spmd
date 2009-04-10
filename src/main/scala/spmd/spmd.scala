@@ -11,7 +11,7 @@ object Spmd extends Http.Server {
       nodes += (name -> Node(name, address, port.toInt))
       Response(OK, "{ ok }", true)
     case Request(GET, "nodes" :: Nil, _) => 
-      Response(OK, "{ \"nodes\": [" + nodes.values.mkString(",") + "]  }", false)
+      Response(OK, "{ \"nodes\": [" + nodes.values.map(_.toJson).mkString(",") + "]  }", false)
   }
 
   def main(args: Array[String]) = {
@@ -23,11 +23,11 @@ case class Node(name: String, address: String, port: Int) {
   def toJson = " { \"name\": "+name+", \"address\": "+address+", \"port\": "+port+" } "
 }
 
-trait Client {
+trait SpmdClient {
   val http = new Http.Client("localhost", 6128)
 
-//  def names(host: HostName)
-  def names = {
+//  def nodes(host: HostName)
+  def nodes = {
     val nodes = http.send(http.get("/nodes"))
     println(nodes)
   }

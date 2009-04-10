@@ -15,6 +15,15 @@ object Http {
       val in = new BufferedReader(new InputStreamReader(socket.getInputStream))
       out.write(req.method + " " + req.url.mkString("/") + " HTTP/1.1\r\n")
       out.flush
+      read(in)
+    }
+
+    def read(in: BufferedReader) = {
+      def read0(acc: String): String = in.readLine match {
+        case null => acc
+        case s => read0(acc + "\n" + s)
+      }
+      read0("")
     }
   }
   
@@ -41,7 +50,10 @@ object Http {
         out.write(res.toString)
         out.flush
 
-        if (res.blocking) Source.fromInputStream(clientSocket.getInputStream).getLines
+        if (res.blocking) {
+          Source.fromInputStream(clientSocket.getInputStream).getLines
+        }
+        else clientSocket.close
       }
     }
   }
