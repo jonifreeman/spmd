@@ -46,7 +46,6 @@ object Http {
         val req = Request.fromRequestLine(in.readLine)
         val action = actions.orElse(notFound)
         val res = action(req)
-        println(res.toString)
         out.write(res.toString)
         out.flush
 
