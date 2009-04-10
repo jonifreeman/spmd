@@ -29,7 +29,7 @@ object Http {
   
   trait Server {    
     def actions: PartialFunction[Request, Response]
-    val notFound: PartialFunction[Request, Response] = { case _ => Response(NotFound, "", None) }
+    val notFound: PartialFunction[Request, Response] = { case _ => new Response(NotFound, "", None) }
 
     def start {
       val serverSocket = new ServerSocket(6128)
@@ -62,7 +62,7 @@ object Http {
     }
   }
 
-  case class Response(status: Status, body: String, blocking: Option[() => Any]) {
+  class Response(val status: Status, val body: String, val blocking: Option[() => Any]) {
     override def toString = 
       "HTTP/1.0 " + status.code + " " + status.toString + "\r\n" +
       "Content-Type: application/json\r\n" +
