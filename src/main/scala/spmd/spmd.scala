@@ -20,7 +20,7 @@ object Spmd extends Http.Server {
 }
 
 case class Node(name: String, address: String, port: Int) {
-  def toJson = " { \"name\": "+name+", \"address\": "+address+", \"port\": "+port+" } "
+  def toJson = " { \"name\": '"+name+"', \"address\": '"+address+"', \"port\": "+port+" } "
 }
 
 trait SpmdClient {
@@ -32,10 +32,12 @@ trait SpmdClient {
     println(nodes)
   }
 
-  def registerNode(node: Node) = {
+  // FIXME return Node
+  def registerNode(name: String, address: String) = {
     val t = new Thread(new Runnable {
       def run {
-        val req = http.put("/nodes/" + node.name + "/" + node.address + "/" + node.port, "")
+        val port = scala.actors.remote.TcpService.generatePort
+        val req = http.put("/nodes/" + name + "/" + address + "/" + port, "")
         http.send(req)
       }
     })
@@ -46,8 +48,8 @@ trait SpmdClient {
 
 object Console extends SpmdClient {
   def main(args: Array[String]) = {
-    // FIXME, ask free port, -name
-    registerNode(Node(args(0), java.net.InetAddress.getLocalHost.getHostAddress, 6520))
+    // FIXME, -name
+    registerNode(args(0), java.net.InetAddress.getLocalHost.getHostAddress)
     scala.tools.nsc.MainGenericRunner.main(Array())
   }
 }
