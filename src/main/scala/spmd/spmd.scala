@@ -9,9 +9,9 @@ object Spmd extends Http.Server {
   def actions = {
     case Request(PUT, "nodes" :: name :: address :: port :: Nil, _) => 
       nodes += (name -> Node(name, address, port.toInt))
-      Response(OK, "{ ok }", true)
+      Response(OK, "{ ok }", Some(() => { nodes -= name }))
     case Request(GET, "nodes" :: Nil, _) => 
-      Response(OK, "{ \"nodes\": [" + nodes.values.map(_.toJson).mkString(",") + "]  }", false)
+      Response(OK, "{ \"nodes\": [" + nodes.values.map(_.toJson).mkString(",") + "]  }", None)
   }
 
   def main(args: Array[String]) = {
