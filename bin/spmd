@@ -6,4 +6,4 @@ SPMD_DIR=`dirname $0`/..
 # FIXME should be lib/spmd-0.1.jar
 SPMD_JAR=$SPMD_DIR/target/classes
 
-scala -cp "$SPMD_JAR" -Denv.classpath="$CLASSPATH":"$SPMD_JAR" spmd.Console "$@"
+scala -cp "$SPMD_JAR" spmd.Spmd "$@"
