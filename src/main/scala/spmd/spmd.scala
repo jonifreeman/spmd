@@ -43,3 +43,11 @@ trait SpmdClient {
     t.start
   }
 }
+
+object Console extends SpmdClient {
+  def main(args: Array[String]) = {
+    // FIXME, ask free port, -name
+    registerNode(Node(args(0), java.net.InetAddress.getLocalHost.getHostAddress, 6520))
+    scala.tools.nsc.MainGenericRunner.main(Array())
+  }
+}
