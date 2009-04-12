@@ -20,20 +20,34 @@ object Spmd extends Http.Server {
 }
 
 case class Node(name: String, address: String, port: Int) {
-  def toJson = " { \"name\": '"+name+"', \"address\": '"+address+"', \"port\": "+port+" } "
+  def toJson = " { \"name\": \""+name+"\", \"address\": \""+address+"\", \"port\": "+port+" } "
 }
+
+case object Node {
+  import scala.util.parsing.json.JSON
+
+  def fromPairs(pairs: List[(Any, Any)]): Node = {
+    Node(pairs.find(_._1 == "name").get._2.asInstanceOf[String], 
+         pairs.find(_._1 == "address").get._2.asInstanceOf[String], 
+         pairs.find(_._1 == "port").get._2.asInstanceOf[Double].toInt)
+  }
+
+  def fromJson(json: String): List[Node] = {
+    val nodes = JSON.parseFull(json) map { case ns: Map[String, List[List[(Any, Any)]]] =>
+      ns("nodes").map(fromPairs _)
+    }
+    nodes.getOrElse(List())
+  }
+}
+
 
 trait SpmdClient {
   val http = new Http.Client("localhost", 6128)
 
 //  def nodes(host: HostName)
-  def nodes = {
-    val nodes = http.send(http.get("/nodes"))
-    println(nodes)
-  }
+  def nodes: List[Node] = Node.fromJson(http.send(http.get("/nodes")))
 
-  // FIXME return Node
-  def registerNode(name: String, address: String) = {
+  def registerNode(name: String, address: String): Unit /*Node*/ = {
     val t = new Thread(new Runnable {
       def run {
         val port = scala.actors.remote.TcpService.generatePort

@@ -8,20 +8,20 @@ object Http {
   class Client(addr: String, port: Int) {
     def put(url: String, body: String) = Request.from(PUT, url, body)
     def get(url: String) = Request.from(GET, url, "")
-    
+
     def send(req: Request) = {
       val socket = new Socket(addr, port)
       val out = new PrintWriter(socket.getOutputStream, true)
       val in = new BufferedReader(new InputStreamReader(socket.getInputStream))
       out.write(req.method + " " + req.url.mkString("/") + " HTTP/1.1\r\n")
       out.flush
-      read(in)
+      read(in).split("\r\n\r\n")(1)
     }
 
     def read(in: BufferedReader) = {
       def read0(acc: String): String = in.readLine match {
         case null => acc
-        case s => read0(acc + "\n" + s)
+        case s => read0(acc + "\r\n" + s)
       }
       read0("")
     }
@@ -64,7 +64,7 @@ object Http {
   class Response(val status: Status, val body: String, val blocking: Option[() => Any]) {
     override def toString = 
       "HTTP/1.0 " + status.code + " " + status.toString + "\r\n" +
-      "Content-Type: application/json\r\n" +
+      "Content-Type: application/json\r\n\r\n" +
       body + "\r\n"
   }
 
