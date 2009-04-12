@@ -24,7 +24,7 @@ object RemoteActor extends SpmdClient {
 
   def register(name: Symbol, actor: Actor) = {
     RActor.classLoader = null // This line can be removed when 2.8 is released (issue #1686)
-    val node = registerNode(name.name, java.net.InetAddress.getLocalHost.getHostAddress)
+    val node = registerNode(name.name, java.net.InetAddress.getLocalHost.getCanonicalHostName)
     RActor.alive(node.port)
     RActor.register(name, actor)
   }

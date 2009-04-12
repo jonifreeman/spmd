@@ -68,7 +68,7 @@ object Console extends SpmdClient {
       println("-name argument is required")
       exit(0)
     }
-    registerNode(name(1), java.net.InetAddress.getLocalHost.getHostAddress)
+    registerNode(name(1), java.net.InetAddress.getLocalHost.getCanonicalHostName)
     scala.tools.nsc.MainGenericRunner.main(Array())
   }
 }
