@@ -20,6 +20,8 @@ object Spmd extends Http.Server with SpmdClient {
   def main(args: Array[String]) = {
     if (args.toList.exists(_ == "-kill"))
       http.send(http.put("/kill", ""))
+    else if (args.toList.exists(_ == "-names"))
+      println(http.send(http.get("/nodes")))
     else 
       start
   }
