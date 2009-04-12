@@ -63,8 +63,12 @@ trait SpmdClient {
 
 object Console extends SpmdClient {
   def main(args: Array[String]) = {
-    // FIXME, -name
-    registerNode(args(0), java.net.InetAddress.getLocalHost.getHostAddress)
+    val name = args.toList.dropWhile(_ != "-name")
+    if (name isEmpty) {
+      println("-name argument is required")
+      exit(0)
+    }
+    registerNode(name(1), java.net.InetAddress.getLocalHost.getHostAddress)
     scala.tools.nsc.MainGenericRunner.main(Array())
   }
 }
