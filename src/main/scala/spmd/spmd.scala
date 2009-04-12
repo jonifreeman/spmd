@@ -9,7 +9,7 @@ object Spmd extends Http.Server with SpmdClient {
   def actions = {
     case Request(PUT, "nodes" :: name :: address :: port :: Nil, _) => 
       knownNodes += (name -> Node(name, address, port.toInt))
-      new Response(OK, "{ \"ok\":\"" + name + "\" }", Some(() => { knownNodes -= name }))
+      new Response(OK, "{\"ok\":\"" + name + "\"}", Some(() => { knownNodes -= name }))
     case Request(GET, "nodes" :: Nil, _) => 
       new Response(OK, "{\"nodes\":[" + knownNodes.values.map(_.toJson).mkString(",") + "]}", None)
     case Request(PUT, "kill" :: Nil, _) => 
@@ -28,7 +28,7 @@ object Spmd extends Http.Server with SpmdClient {
 }
 
 case class Node(name: String, address: String, port: Int) {
-  def toJson = " { \"name\": \""+name+"\", \"address\": \""+address+"\", \"port\": "+port+" } "
+  def toJson = "{\"name\":\""+name+"\", \"address\":\""+address+"\", \"port\":"+port+"}"
 }
 
 case object Node {
@@ -40,10 +40,11 @@ case object Node {
   }
 
   def fromJson(json: String): List[Node] = {
-    val nodes = JSON.parseFull(json) map { case ns: Map[String, List[List[(Any, Any)]]] =>
-      ns("nodes").map(fromPairs _)
+    val parsed = JSON.parseFull(json).get.asInstanceOf[Map[String, Any]]("nodes")
+    parsed match {
+      case ns: List[List[(Any, Any)]] => ns.map(fromPairs _)
+      case _ => List()
     }
-    nodes.getOrElse(List())
   }
 }
 
@@ -54,6 +55,7 @@ trait SpmdClient {
   def nodes: List[Node] = Node.fromJson(http.send(http.get("/nodes")))
 
   def registerNode(name: String, address: String): Node = {
+    if (findNode(name).isDefined) error("Node with name '" + name + "' already exists.")
     val port = scala.actors.remote.TcpService.generatePort
     val t = new Thread(new Runnable {
       def run {
