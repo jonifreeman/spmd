@@ -27,9 +27,10 @@ case object Node {
   import scala.util.parsing.json.JSON
 
   def fromPairs(pairs: List[(Any, Any)]): Node = {
-    Node(pairs.find(_._1 == "name").get._2.asInstanceOf[String], 
-         pairs.find(_._1 == "address").get._2.asInstanceOf[String], 
-         pairs.find(_._1 == "port").get._2.asInstanceOf[Double].toInt)
+    def valueOf(name: String) = pairs.find(_._1 == name).get._2
+    Node(valueOf("name").asInstanceOf[String], 
+         valueOf("address").asInstanceOf[String], 
+         valueOf("port").asInstanceOf[Double].toInt)
   }
 
   def fromJson(json: String): List[Node] = {
