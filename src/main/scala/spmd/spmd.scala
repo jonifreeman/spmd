@@ -46,16 +46,17 @@ trait SpmdClient {
 //  def nodes(host: HostName)
   def nodes: List[Node] = Node.fromJson(http.send(http.get("/nodes")))
 
-  def registerNode(name: String, address: String): Unit /*Node*/ = {
+  def registerNode(name: String, address: String): Node = {
+    val port = scala.actors.remote.TcpService.generatePort
     val t = new Thread(new Runnable {
       def run {
-        val port = scala.actors.remote.TcpService.generatePort
         val req = http.put("/nodes/" + name + "/" + address + "/" + port, "")
         http.send(req)
       }
     })
     t.setDaemon(true)
     t.start
+    Node(name, address, port)
   }
 }
 
