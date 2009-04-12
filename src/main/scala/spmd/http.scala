@@ -15,7 +15,8 @@ object Http {
       val in = new BufferedReader(new InputStreamReader(socket.getInputStream))
       out.write(req.method + " " + req.url.mkString("/") + " HTTP/1.1\r\n")
       out.flush
-      read(in).split("\r\n\r\n")(1)
+      val res = read(in).split("\r\n\r\n")
+      if (res.length > 1) res(1) else ""
     }
 
     def read(in: BufferedReader) = {

@@ -1,21 +1,27 @@
 package spmd
 
-object Spmd extends Http.Server {
+object Spmd extends Http.Server with SpmdClient {
   import Http._
   import scala.collection.mutable.{HashMap, SynchronizedMap}
 
-  val nodes = new HashMap[String, Node]() with SynchronizedMap[String, Node]
+  val knownNodes = new HashMap[String, Node]() with SynchronizedMap[String, Node]
 
   def actions = {
     case Request(PUT, "nodes" :: name :: address :: port :: Nil, _) => 
-      nodes += (name -> Node(name, address, port.toInt))
-      new Response(OK, "{ ok }", Some(() => { nodes -= name }))
+      knownNodes += (name -> Node(name, address, port.toInt))
+      new Response(OK, "{ \"ok\":\"" + name + "\" }", Some(() => { knownNodes -= name }))
     case Request(GET, "nodes" :: Nil, _) => 
-      new Response(OK, "{ \"nodes\": [" + nodes.values.map(_.toJson).mkString(",") + "]  }", None)
+      new Response(OK, "{\"nodes\":[" + knownNodes.values.map(_.toJson).mkString(",") + "]}", None)
+    case Request(PUT, "kill" :: Nil, _) => 
+      exit(0)
+      new Response(OK, "", None)
   }
 
   def main(args: Array[String]) = {
-    start
+    if (args.toList.exists(_ == "-kill"))
+      http.send(http.put("/kill", ""))
+    else 
+      start
   }
 }
 
