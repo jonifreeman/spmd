@@ -39,7 +39,6 @@ case object Node {
   }
 }
 
-
 trait SpmdClient {
   val http = new Http.Client("localhost", 6128)
 
@@ -58,6 +57,8 @@ trait SpmdClient {
     t.start
     Node(name, address, port)
   }
+
+  def findNode(name: String) = nodes.find(_.name == name)
 }
 
 object Console extends SpmdClient {
