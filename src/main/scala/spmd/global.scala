@@ -5,14 +5,15 @@ object Global extends SpmdClient {
   import scala.actors.remote.{RemoteActor => RActor, Node => RNode}
 
   def register(name: Symbol) = findNode(Console.node).foreach { localNode =>
-    val nameServer = RActor.select(RNode(localNode.address, localNode.port), 'globalNameServer)
-    nameServer ! RegisterName(name)
+    nameServer(localNode) ! RegisterName(name)
   }
 
   def whereIsName(name: Symbol): Option[Node] = nodes.find { node =>
-    val nameServer = RActor.select(RNode(node.address, node.port), 'globalNameServer)
-    (nameServer !? HasName(name)).asInstanceOf[Boolean]
+    (nameServer(node) !? HasName(name)).asInstanceOf[Boolean]
   }
+
+  private def nameServer(node: Node) = 
+    RActor.select(RNode(node.address, node.port), 'globalNameServer)
 
   //def registeredNames = ()
   // FIXME, we should not return all known nodes, just the nodes
