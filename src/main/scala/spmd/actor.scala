@@ -32,7 +32,10 @@ object RemoteActor extends SpmdClient {
   }
 
   def select(name: Symbol): AbstractActor = Global.whereIsName(name) match {
-    case Some(node) => RActor.select(RNode(node.address, node.port), name)
+    case Some(node) => select(name, node)
     case None => error("no such name '" + name + "'")
   }
+
+  def select(name: Symbol, node: Node): AbstractActor = 
+    RActor.select(RNode(node.address, node.port), name)
 }

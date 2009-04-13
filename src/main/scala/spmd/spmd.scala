@@ -31,7 +31,7 @@ case class Node(name: String, address: String, port: Int) {
   def toJson = "{\"name\":\""+name+"\", \"address\":\""+address+"\", \"port\":"+port+"}"
 }
 
-case object Node {
+object Node {
   import scala.util.parsing.json.JSON
 
   def fromPairs(pairs: List[(Any, Any)]): Node = {
@@ -73,6 +73,11 @@ trait SpmdClient {
 
 object Console extends SpmdClient {
   def main(args: Array[String]) = {
+    start(args)
+    scala.tools.nsc.MainGenericRunner.main(Array())
+  }
+
+  def start(args: Array[String]) = {
     val name = args.toList.dropWhile(_ != "-name")
     if (name isEmpty) {
       println("-name argument is required")
@@ -81,7 +86,6 @@ object Console extends SpmdClient {
     node = name(1)
     registerNode(name(1), java.net.InetAddress.getLocalHost.getCanonicalHostName)
     Global.start
-    scala.tools.nsc.MainGenericRunner.main(Array())
   }
 
   var node = "nonode@nohost"
