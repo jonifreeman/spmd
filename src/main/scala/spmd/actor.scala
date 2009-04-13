@@ -24,13 +24,15 @@ object RemoteActor extends SpmdClient {
 
   def register(name: Symbol, actor: Actor) = {
     RActor.classLoader = null // This line can be removed when 2.8 is released (issue #1686)
-    val node = registerNode(name.name, java.net.InetAddress.getLocalHost.getCanonicalHostName)
-    RActor.alive(node.port)
-    RActor.register(name, actor)
+    findNode(Console.node).foreach { localNode =>
+      RActor.alive(localNode.port)
+      RActor.register(name, actor)
+      Global.register(name)
+    }
   }
 
-  def select(name: Symbol): AbstractActor = findNode(name.name) match {
+  def select(name: Symbol): AbstractActor = Global.whereIsName(name) match {
     case Some(node) => RActor.select(RNode(node.address, node.port), name)
-    case None => error("no such node '" + name + "'")
+    case None => error("no such name '" + name + "'")
   }
 }

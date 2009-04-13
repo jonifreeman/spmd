@@ -78,7 +78,11 @@ object Console extends SpmdClient {
       println("-name argument is required")
       exit(0)
     }
+    node = name(1)
     registerNode(name(1), java.net.InetAddress.getLocalHost.getCanonicalHostName)
+    Global.start
     scala.tools.nsc.MainGenericRunner.main(Array())
   }
+
+  var node = "nonode@nohost"
 }
