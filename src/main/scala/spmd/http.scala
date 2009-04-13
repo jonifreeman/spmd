@@ -11,7 +11,7 @@ object Http {
 
     def send(req: Request) = {
       val socket = new Socket(addr, port)
-      val out = new PrintWriter(socket.getOutputStream, true)
+      val out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream))
       val in = new BufferedReader(new InputStreamReader(socket.getInputStream))
       out.write(req.method + " " + req.url.mkString("/") + " HTTP/1.1\r\n")
       out.flush
@@ -45,7 +45,7 @@ object Http {
 
     class Handler(clientSocket: Socket) extends scala.actors.Actor {
       def act {
-        val out = new PrintWriter(clientSocket.getOutputStream, true)
+        val out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream))
         val in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream))
         val req = Request.fromRequestLine(in.readLine)
         val action = actions.orElse(notFound)
