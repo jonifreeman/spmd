@@ -21,7 +21,7 @@ object LoadBalancer {
   }
   
   private def roundRobin(counter: Int): Unit = {
-    val nodes = spmd.Console.nodes
+    val nodes = Console.nodes
     if (nodes isEmpty) error("no nodes")
     val node = nodes(counter % nodes.size)
     val worker = select('worker, node)

@@ -16,6 +16,9 @@ object Http {
       out.write(req.method + " " + req.url.mkString("/") + " HTTP/1.1\r\n")
       out.flush
       val res = read(in).split("\r\n\r\n")
+      out.close
+      in.close
+      socket.close
       if (res.length > 1) res(1) else ""
     }
 
@@ -56,8 +59,11 @@ object Http {
           } finally {
             res.blocking.map(exitHandler => exitHandler())
           }
+        } else {
+          out.close
+          in.close
+          clientSocket.close
         }
-        else clientSocket.close
       }
     }
   }

@@ -18,12 +18,16 @@ object Spmd extends Http.Server with SpmdClient {
   }
 
   def main(args: Array[String]) = {
-    if (args.toList.exists(_ == "-kill"))
-      http.send(http.put("/kill", ""))
-    else if (args.toList.exists(_ == "-names"))
-      println(http.send(http.get("/nodes")))
-    else 
-      start
+    try {
+      if (args.toList.exists(_ == "-kill"))
+        http.send(http.put("/kill", ""))
+      else if (args.toList.exists(_ == "-names"))
+        println(http.send(http.get("/nodes")))
+      else 
+        start
+    } catch {
+      case e: java.net.ConnectException => println("spmd is not running")
+    }
   }
 }
 
@@ -40,8 +44,8 @@ object Node {
   }
 
   def fromJson(json: String): List[Node] = {
-    val parsed = JSON.parseFull(json).get.asInstanceOf[Map[String, Any]]("nodes")
-    parsed match {
+    val nodes = JSON.parseFull(json).get.asInstanceOf[Map[String, Any]]("nodes")
+    nodes match {
       case ns: List[List[(Any, Any)]] => ns.map(fromPairs _)
       case _ => List()
     }
