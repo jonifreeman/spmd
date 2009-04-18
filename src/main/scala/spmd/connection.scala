@@ -22,9 +22,6 @@ object Connection {
       out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream))
       in = socket.getInputStream
     }
-
-    def disconnect = {
-    }
   }
   
   trait Server {
@@ -54,7 +51,7 @@ object Connection {
             out.flush
           }
         } catch {
-          case e: IOException => 
+          case e: IOException => // ok, client closed the connection
         } finally {
           exitHandler(clientSocket)
         }
