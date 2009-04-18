@@ -33,12 +33,13 @@ object Connection {
       val serverSocket = new ServerSocket(6128)
     
       while (true) {
+        // FIXME use a pool
         new Handler(serverSocket.accept).start
       }
     }
 
-    class Handler(clientSocket: Socket) extends scala.actors.Actor {
-      def act {
+    class Handler(clientSocket: Socket) extends Thread {
+      override def run {
         val out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream))
         val in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream))
 
