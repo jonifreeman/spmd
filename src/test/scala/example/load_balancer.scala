@@ -37,10 +37,10 @@ object Worker {
       var count = 0
       register('worker, self)
       loop {
-        receive {
+        react {
           case Work => 
             count = count + 1 
-            if (count % 100 == 0) println("working hard @ " + Console.node)
+            if (count % 100 == 0) println("working hard @ " + Console.node + " (" + count + " items done.)")
           case x => println("unknown message " + x)
         }
       }
