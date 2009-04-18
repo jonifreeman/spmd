@@ -1,28 +1,28 @@
 package spmd
 
-object Spmd extends Http.Server with SpmdClient {
-  import Http._
+import Connection._
+
+object Spmd extends Server with SpmdClient {
   import scala.collection.mutable.{HashMap, SynchronizedMap}
+  import java.net.Socket
 
-  val knownNodes = new HashMap[String, Node]() with SynchronizedMap[String, Node]
+  val knownNodes = new HashMap[Socket, Node]() with SynchronizedMap[Socket, Node]
 
+  def exitHandler = (s: Socket) => { knownNodes -= s }
   def actions = {
-    case Request(PUT, "nodes" :: name :: address :: port :: Nil, _) => 
-      knownNodes += (name -> Node(name, address, port.toInt))
-      new Response(OK, "{\"ok\":\"" + name + "\"}", Some(() => { knownNodes -= name }))
-    case Request(GET, "nodes" :: Nil, _) => 
-      new Response(OK, "{\"nodes\":[" + knownNodes.values.map(_.toJson).mkString(",") + "]}", None)
-    case Request(PUT, "kill" :: Nil, _) => 
-      exit(0)
-      new Response(OK, "", None)
+    case Request(Attr("name", n) :: Attr("address", a) :: Attr("port", p) :: Nil, s) => 
+      knownNodes += (s -> Node(n, a, p.toInt))
+      new Response(List(Attr("name", n)) :: Nil)
+    case Request(Attr("nodes", _) :: Nil, _) => new Response(knownNodes.values.toList.map(_.toAttrs))
+    case Request(Attr("kill", _) :: Nil, _) => exit(0)
   }
 
   def main(args: Array[String]) = {
     try {
       if (args.toList.exists(_ == "-kill"))
-        http.send(http.put("/kill", ""))
+        conn.send(List(Attr("kill", "")))
       else if (args.toList.exists(_ == "-names"))
-        println(http.send(http.get("/nodes")))
+        println(conn.send(List(Attr("nodes", ""))))
       else 
         start
     } catch {
@@ -32,44 +32,36 @@ object Spmd extends Http.Server with SpmdClient {
 }
 
 case class Node(name: String, address: String, port: Int) {
-  def toJson = "{\"name\":\""+name+"\", \"address\":\""+address+"\", \"port\":"+port+"}"
+  def toAttrs = List(Attr("name", name), Attr("address", address), Attr("port", port.toString))
 }
 
 object Node {
-  import scala.util.parsing.json.JSON
-
-  def fromPairs(pairs: List[(Any, Any)]): Node = {
-    def valueOf[A](name: String) = pairs.find(_._1 == name).get._2.asInstanceOf[A]
+  def fromAttrs(attrs: List[Attr]): Node = {
+    def valueOf[A](name: String) = attrs.find(_.key == name).get.value
     Node(valueOf[String]("name"), valueOf[String]("address"), valueOf[Double]("port").toInt)
   }
 
-  def fromJson(json: String): List[Node] = {
-    val nodes = JSON.parseFull(json).get.asInstanceOf[Map[String, Any]]("nodes")
-    nodes match {
-      case ns: List[List[(Any, Any)]] => ns.map(fromPairs _)
-      case _ => List()
-    }
-  }
+  def fromResponse(res: Response): List[Node] = res.attrs.map(fromAttrs)
 }
 
 trait SpmdClient {
-  val http = new Http.Client("localhost", 6128)
+  val conn = new Client("localhost", 6128)
 
 //  def nodes(host: HostName)
-  def nodes: List[Node] = Node.fromJson(http.send(http.get("/nodes")))
+  def nodes: List[Node] = Node.fromResponse(conn.send(List(Attr("nodes", ""))))
 
   def registerNode(name: String, address: String): Node = {
     if (findNode(name).isDefined) error("Node with name '" + name + "' already exists.")
     val port = scala.actors.remote.TcpService.generatePort
+    val node = Node(name, address, port)
     val t = new Thread(new Runnable {
       def run {
-        val req = http.put("/nodes/" + name + "/" + address + "/" + port, "")
-        http.send(req)
+        conn.send(node.toAttrs)
       }
     })
     t.setDaemon(true)
     t.start
-    Node(name, address, port)
+    node
   }
 
   def findNode(name: String) = nodes.find(_.name == name)

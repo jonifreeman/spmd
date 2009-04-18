@@ -12,7 +12,7 @@ import spmd.Console
  *    ...
  *
  * 2. Start load balancer
- *    scala -cp target/classes:target/test-clasample.LoadBalancer
+ *    scala -cp target/classes:target/test-classes example.LoadBalancer
  */
 object LoadBalancer {
   def main(args: Array[String]) = {
