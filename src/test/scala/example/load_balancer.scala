@@ -27,6 +27,7 @@ object LoadBalancer {
     val node = nodes(counter % nodes.size)
     val worker = select('worker, node)
     worker ! Work
+    Thread.sleep(20)
     roundRobin(if (counter < Int.MaxValue) counter + 1 else 0)
   }
 }
@@ -41,7 +42,7 @@ object Worker {
         react {
           case Work => 
             count = count + 1 
-            if (count % 100 == 0) println("working hard @ " + Console.node + " (" + count + " items done.)")
+            if (count % 50 == 0) println("working hard @ " + Console.node + " (" + count + " items done.)")
           case x => println("unknown message " + x)
         }
       }
