@@ -10,6 +10,7 @@ SPMD_JAR=$SPMD_DIR/target/classes
 DAEMONS=`ps --no-headers -C spmd | wc -l`
 if [ $DAEMONS -lt "1" ]; then
   $SPMD_DIR/bin/spmd &
+  sleep 1
 fi
 
 ARGS=$@
