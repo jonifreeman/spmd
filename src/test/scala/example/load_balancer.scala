@@ -13,10 +13,11 @@ import spmd.Console
  *
  * 2. Start load balancer
  *    scala -cp target/classes:target/test-classes example.LoadBalancer
+ *
+ * 3. Start new workers and kill old ones...
  */
 object LoadBalancer {
   def main(args: Array[String]) = {
-    Console.start(Array("-name", "lb"))
     roundRobin(0)
   }
   
