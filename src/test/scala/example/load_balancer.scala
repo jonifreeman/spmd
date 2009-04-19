@@ -7,8 +7,8 @@ import spmd.Console
 
 /**
  * 1. Start workers
- *    scala -cp target/classes:target/test-classes example.Worker -name w1
- *    scala -cp target/classes:target/test-classes example.Worker -name w2
+ *    bin/node -cp target/classes:target/test-classes -s example.Worker -name w1
+ *    bin/node -cp target/classes:target/test-classes -s example.Worker -name w2
  *    ...
  *
  * 2. Start load balancer
@@ -34,7 +34,6 @@ object LoadBalancer {
 
 object Worker {
   def main(args: Array[String]) = {
-    Console.start(args)
     actor {
       var count = 0
       register('worker, self)

@@ -76,7 +76,7 @@ object Console extends SpmdClient {
   def start(args: Array[String]) = {
     def getopt(opt: String) = {
       val value = args.toList.dropWhile(_ != opt)
-      if (value isEmpty) None else value.tail.reverse.firstOption
+      if (value isEmpty) None else value.drop(1).firstOption
     }
 
     val name = getopt("-name").getOrElse {
@@ -86,6 +86,12 @@ object Console extends SpmdClient {
     node = name
     registerNode(name, java.net.InetAddress.getLocalHost.getCanonicalHostName)
     Global.start
+
+    val script = getopt("-s")
+    script.foreach { s => 
+      val clazz = Class.forName(s)
+      clazz.getMethod("main", classOf[Array[String]]).invoke(null, args.asInstanceOf[AnyRef])
+    }
   }
 
   var node = "nonode@nohost"

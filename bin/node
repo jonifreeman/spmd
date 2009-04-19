@@ -26,4 +26,4 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-scala -cp "$SPMD_JAR" -Denv.classpath="$CLASSPATH":"$SPMD_JAR":"$CP" spmd.Console $ARGS
+scala -cp "$SPMD_JAR":"$CP" -Denv.classpath="$CLASSPATH":"$SPMD_JAR":"$CP" spmd.Console $ARGS
