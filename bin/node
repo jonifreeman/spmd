@@ -12,4 +12,18 @@ if [ $DAEMONS -lt "1" ]; then
   $SPMD_DIR/bin/spmd &
 fi
 
-scala -cp "$SPMD_JAR" -Denv.classpath="$CLASSPATH":"$SPMD_JAR" spmd.Console "$@"
+ARGS=$@
+
+while [ $# -gt 0 ]; do
+    case $1 in
+	-cp)
+	    CP="$2"
+	    shift; shift
+	    ;;
+	*)
+	    shift
+	    ;;
+    esac
+done
+
+scala -cp "$SPMD_JAR" -Denv.classpath="$CLASSPATH":"$SPMD_JAR":"$CP" spmd.Console $ARGS

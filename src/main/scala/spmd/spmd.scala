@@ -74,13 +74,17 @@ object Console extends SpmdClient {
   }
 
   def start(args: Array[String]) = {
-    val name = args.toList.dropWhile(_ != "-name")
-    if (name isEmpty) {
+    def getopt(opt: String) = {
+      val value = args.toList.dropWhile(_ != opt)
+      if (value isEmpty) None else value.tail.reverse.firstOption
+    }
+
+    val name = getopt("-name").getOrElse {
       println("-name argument is required")
       exit(0)
     }
-    node = name(1)
-    registerNode(name(1), java.net.InetAddress.getLocalHost.getCanonicalHostName)
+    node = name
+    registerNode(name, java.net.InetAddress.getLocalHost.getCanonicalHostName)
     Global.start
   }
 
