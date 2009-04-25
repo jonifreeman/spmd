@@ -6,21 +6,14 @@ import scala.io.Source
 
 object Connection {
   class Client(addr: String, port: Int) {
-    var socket: Socket = _ // FIXME close when client closes
-    var out: BufferedWriter = _
-    var in: InputStream = _
+    lazy val socket = new Socket(addr, port) // FIXME close when client closes
+    lazy val out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream))
+    lazy val in = socket.getInputStream
 
     def send(attrs: List[Attr]) = {
-      if (socket == null) connect
       out.write(attrs.mkString(";") + "\n")
       out.flush
       Response.from(in)
-    }
-
-    private def connect = {
-      socket = new Socket(addr, port)
-      out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream))
-      in = socket.getInputStream
     }
   }
   
