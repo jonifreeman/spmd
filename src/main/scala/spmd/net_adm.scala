@@ -8,7 +8,7 @@ object NetAdm extends scala.actors.Actor {
   val knownNodes = new scala.collection.mutable.ListBuffer[Node]
 
   def act = {
-    register('net_adm, self)    
+    register('net_adm, this)    
     loop { receive { 
       case Ping(other: Node) => knownNodes += other; reply(Pong) 
       case GetNodes => knownNodes
