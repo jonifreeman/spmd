@@ -72,7 +72,14 @@ trait SpmdClient {
     node
   }
 
-  def findNode(name: String) = nodes.find(_.name == name)
+  def findNode(name: String): Option[Node] = {
+    def findByName(nodeName: String, nodes: List[Node]) = nodes.find(_.name == nodeName)
+    if (name.contains('@')) {
+      val elems = name.split('@')
+      findByName(elems(0), nodes(elems(1)))
+    }
+    else findByName(name, nodes)
+  }
 }
 
 object Console extends SpmdClient {
