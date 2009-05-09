@@ -98,8 +98,7 @@ object Console extends SpmdClient {
       println("-name argument is required")
       exit(0)
     }
-    node = name
-    registerNode(name, java.net.InetAddress.getLocalHost.getCanonicalHostName)
+    node = registerNode(name, java.net.InetAddress.getLocalHost.getCanonicalHostName)
     Global.start
 
     val script = getopt("-s")
@@ -109,5 +108,5 @@ object Console extends SpmdClient {
     }
   }
 
-  var node = "nonode@nohost"
+  var node = Node("nonode", "nohost", -1)
 }

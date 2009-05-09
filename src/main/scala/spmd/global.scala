@@ -4,9 +4,7 @@ object Global extends SpmdClient {
   import scala.actors.Actor._
   import scala.actors.remote.{RemoteActor => RActor, Node => RNode}
 
-  def register(name: Symbol) = findNode(Console.node).foreach { localNode =>
-    nameServer(localNode) ! RegisterName(name)
-  }
+  def register(name: Symbol) = nameServer(Console.node) ! RegisterName(name)
 
   def whereIsName(name: Symbol): Option[Node] = nodes.find { node =>
     (nameServer(node) !? HasName(name)).asInstanceOf[Boolean]

@@ -24,11 +24,9 @@ object RemoteActor extends SpmdClient {
 
   def register(name: Symbol, actor: Actor) = {
     RActor.classLoader = null // This line can be removed when 2.8 is released (issue #1686)
-    findNode(Console.node).foreach { localNode =>
-      RActor.alive(localNode.port)
-      RActor.register(name, actor)
-      Global.register(name)
-    }
+    RActor.alive(Console.node.port)
+    RActor.register(name, actor)
+    Global.register(name)
   }
 
   def select(name: Symbol): AbstractActor = Global.whereIsName(name) match {
