@@ -100,6 +100,7 @@ object Console extends SpmdClient {
     }
     node = registerNode(name, java.net.InetAddress.getLocalHost.getCanonicalHostName)
     Global.start
+    NetAdm.start
 
     val script = getopt("-s")
     script.foreach { s => 
