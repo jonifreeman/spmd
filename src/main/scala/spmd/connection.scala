@@ -6,7 +6,7 @@ import scala.io.Source
 
 object Connection {
   class Client(addr: String, port: Int) {
-    lazy val socket = new Socket(addr, port) // FIXME close when client closes
+    lazy val socket = new Socket(addr, port)
     lazy val out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream))
     lazy val in = socket.getInputStream
 
@@ -15,6 +15,8 @@ object Connection {
       out.flush
       Response.from(in)
     }
+
+    def close = socket.close
   }
   
   trait Server {

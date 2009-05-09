@@ -47,8 +47,16 @@ object Node {
 trait SpmdClient {
   val conn = new Client("localhost", 6128)
 
-//  def nodes(host: HostName)
-  def nodes: List[Node] = Node.fromResponse(conn.send(List(Attr("nodes", ""))))
+  def nodes(hostname: String): List[Node] = {
+    val remote = new Client(hostname, 6128)
+    try {
+      nodes(remote)
+    } finally {
+      remote.close
+    }
+  }
+  def nodes: List[Node] = nodes(conn)
+  private def nodes(c: Client) = Node.fromResponse(conn.send(List(Attr("nodes", ""))))
 
   def registerNode(name: String, address: String): Node = {
     if (findNode(name).isDefined) error("Node with name '" + name + "' already exists.")
