@@ -1,11 +1,12 @@
 package spmd
 
 object NetAdm extends scala.actors.Actor {
+  import scala.collection.mutable.{LinkedHashSet, SynchronizedSet}
   import scala.actors.Actor._
   import scala.actors.TIMEOUT
   import spmd.RemoteActor._
 
-  val knownNodes = new scala.collection.mutable.ListBuffer[Node]
+  val knownNodes = new LinkedHashSet[Node] with SynchronizedSet[Node]
 
   def act = {
     register('net_adm, this)    
@@ -37,7 +38,7 @@ object NetAdm extends scala.actors.Actor {
   def nodes: List[Node] = knownNodes.toList
 
   private def newKnownNode(other: Node) = 
-    if (other != Console.node && !knownNodes.contains(other)) knownNodes += other 
+    if (other != Console.node) knownNodes += other 
 
   case class Ping(other: Node)
   case object GetNodes
