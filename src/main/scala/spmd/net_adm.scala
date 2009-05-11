@@ -36,7 +36,8 @@ object NetAdm extends scala.actors.Actor {
 
   def nodes: List[Node] = knownNodes.toList
 
-  private def newKnownNode(other: Node) = if (other != Console.node) knownNodes += other 
+  private def newKnownNode(other: Node) = 
+    if (other != Console.node && !knownNodes.contains(other)) knownNodes += other 
 
   case class Ping(other: Node)
   case object GetNodes
