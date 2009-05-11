@@ -11,10 +11,10 @@ object NetAdm extends scala.actors.Actor {
   def act = {
     register('net_adm, this)    
     loop { receive { 
-      case Ping(other: Node) => {
+      case Ping(other) => 
         newKnownNode(other)
         reply(Pong) 
-      }
+      case NewNode(node) => newKnownNode(node)
       case GetNodes => knownNodes
     }}
   }
@@ -25,10 +25,13 @@ object NetAdm extends scala.actors.Actor {
         val targetNetAdm = select('net_adm, node)
         targetNetAdm ! Ping(Console.node)
         self.receiveWithin(1000) {
-          case pong @ Pong => {
+          case pong @ Pong => 
+            knownNodes.foreach { n =>
+              select('net_adm, n) ! NewNode(node)
+              targetNetAdm ! NewNode(n)
+            }
             newKnownNode(node) 
             pong
-          }
           case TIMEOUT => Pang("timout")
         }
       case None => Pang("no such node")
@@ -41,6 +44,7 @@ object NetAdm extends scala.actors.Actor {
     if (other != Console.node) knownNodes += other 
 
   case class Ping(other: Node)
+  case class NewNode(node: Node)
   case object GetNodes
 
   sealed abstract class PingResponse
