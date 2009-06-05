@@ -67,13 +67,14 @@ object Monitor extends Connection.Server {
 
   private def connectTo(node: Node) {
     Util.spawnDaemon {
-      new Client(node.address, port).send(Nil)
+      new Client(node.address, node.monitorPort).send(Nil)
     }
   }
 
-  override val port = 6129
+  override val port = Console.node.monitorPort
 
   def exitHandler = (a: Address) => { 
+    println("exit")
     // FIXME send {nodedown,n2@nipert}
   }
 

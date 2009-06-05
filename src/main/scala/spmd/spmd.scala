@@ -10,8 +10,8 @@ object Spmd extends Server with SpmdClient {
 
   def exitHandler = (a: Address) => { knownNodes -= a }
   def actions = {
-    case Request(client, Attr("name", n) :: Attr("address", a) :: Attr("port", p) :: Nil) => 
-      knownNodes += (client -> Node(n, a, p.toInt))
+    case Request(client, Attr("name", n) :: Attr("address", a) :: Attr("port", p) :: Attr("monitorPort", m) :: Nil) => 
+      knownNodes += (client -> Node(n, a, p.toInt, m.toInt))
       Response(List(Attr("name", n)) :: Nil)
     case Request(_, Attr("nodes", _) :: Nil) => Response(knownNodes.values.toList.map(_.toAttrs))
     case Request(_, Attr("kill", _) :: Nil) => exit(0)
@@ -31,14 +31,17 @@ object Spmd extends Server with SpmdClient {
   }
 }
 
-case class Node(name: String, address: String, port: Int) {
-  def toAttrs = List(Attr("name", name), Attr("address", address), Attr("port", port.toString))
+// monitorPort can be removed if the port for Actor comm could be utilized
+case class Node(name: String, address: String, port: Int, monitorPort: Int) {
+  def toAttrs = List(Attr("name", name), Attr("address", address), 
+                     Attr("port", port.toString), Attr("monitorPort", monitorPort.toString))
 }
 
 object Node {
   def fromAttrs(attrs: List[Attr]): Node = {
     def valueOf[A](name: String) = attrs.find(_.key == name).get.value
-    Node(valueOf[String]("name"), valueOf[String]("address"), valueOf[Double]("port").toInt)
+    Node(valueOf[String]("name"), valueOf[String]("address"), 
+         valueOf[Double]("port").toInt, valueOf[Double]("monitorPort").toInt)
   }
 
   def fromResponse(res: Response): List[Node] = res.attrs.map(fromAttrs)
@@ -61,7 +64,8 @@ trait SpmdClient {
   def registerNode(name: String, address: String): Node = {
     if (findNode(name).isDefined) error("Node with name '" + name + "' already exists.")
     val port = scala.actors.remote.TcpService.generatePort
-    val node = Node(name, address, port)
+    val monitorPort = scala.actors.remote.TcpService.generatePort
+    val node = Node(name, address, port, monitorPort)
     Util.spawnDaemon { conn.send(node.toAttrs) }
     node
   }
@@ -95,7 +99,7 @@ object Console extends SpmdClient {
     }
     node = registerNode(name, java.net.InetAddress.getLocalHost.getCanonicalHostName)
     Global.start
-//    Util.spawnDaemon { Monitor.start }
+    Util.spawnDaemon { Monitor.start }
     NetAdm.start
 
     val script = getopt("-s")
@@ -105,5 +109,5 @@ object Console extends SpmdClient {
     }
   }
 
-  var node = Node("nonode", "nohost", -1)
+  var node = Node("nonode", "nohost", -1, -1)
 }
