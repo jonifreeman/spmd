@@ -71,8 +71,11 @@ object Monitor extends Connection.Server {
   override val port = Console.node.monitorPort
 
   def exitHandler = (a: Address) => { 
-    println("exit")
-    // FIXME send {nodedown,n2@nipert}
+    def findByAddr = monitors.filterKeys(n => n.address == a.address && n.port == a.port)
+    findByAddr.foreach { monitors =>
+      val (crashedNode, actors) = monitors
+      actors.foreach { _ ! ('nodedown, crashedNode) }
+    }
   }
 
   def actions = {
