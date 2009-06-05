@@ -58,18 +58,15 @@ object Monitor extends Connection.Server {
 
   val monitors = new HashMap[Node, List[Actor]]() with SynchronizedMap[Node, List[Actor]]
 
-  def monitorNode(node: Node) = {
+  def monitorNode(node: Node) {
     require(node != Console.node)
     if (!monitors.contains(node)) connectTo(node)
     val listeners = monitors.getOrElse(node, List())
     monitors + (node -> (self :: listeners))
   }
 
-  private def connectTo(node: Node) {
-    Util.spawnDaemon {
-      new Client(node.address, node.monitorPort).send(Nil)
-    }
-  }
+  private def connectTo(node: Node) =
+    new Client(node.address, node.monitorPort).send(Console.node.toAttrs)
 
   override val port = Console.node.monitorPort
 
@@ -79,6 +76,9 @@ object Monitor extends Connection.Server {
   }
 
   def actions = {
-    case r @ Request(_, _) => Response(Nil)
+    case Request(_, Attr("name", n) :: Attr("address", a) :: Attr("port", p) :: Attr("monitorPort", m) :: Nil) => 
+      val monitor = Node(n, a, p.toInt, m.toInt)
+      new Client(monitor.address, monitor.monitorPort).send(Nil)
+    case _ => Response(Nil)
   }
 }
