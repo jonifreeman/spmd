@@ -12,8 +12,8 @@ object Spmd extends Server with SpmdClient {
   def actions = {
     case Request(Attr("name", n) :: Attr("address", a) :: Attr("port", p) :: Nil, s) => 
       knownNodes += (s -> Node(n, a, p.toInt))
-      new Response(List(Attr("name", n)) :: Nil)
-    case Request(Attr("nodes", _) :: Nil, _) => new Response(knownNodes.values.toList.map(_.toAttrs))
+      Response(List(Attr("name", n)) :: Nil)
+    case Request(Attr("nodes", _) :: Nil, _) => Response(knownNodes.values.toList.map(_.toAttrs))
     case Request(Attr("kill", _) :: Nil, _) => exit(0)
   }
 
@@ -82,6 +82,7 @@ trait SpmdClient {
   }
 }
 
+// FIXME move to own file 
 object Console extends SpmdClient {
   def main(args: Array[String]) = {
     start(args)
@@ -100,6 +101,7 @@ object Console extends SpmdClient {
     }
     node = registerNode(name, java.net.InetAddress.getLocalHost.getCanonicalHostName)
     Global.start
+    Monitor.start
     NetAdm.start
 
     val script = getopt("-s")

@@ -23,9 +23,10 @@ object Connection {
     def actions: PartialFunction[Request, Response]
     def exitHandler: Socket => Any
     val notFound: PartialFunction[Request, Response] = { case _ => new Response(Nil) }
+    val port = 6128
 
     def start {
-      val serverSocket = new ServerSocket(6128)
+      val serverSocket = new ServerSocket(port)
     
       while (true) {
         // FIXME use a pool
@@ -55,7 +56,7 @@ object Connection {
     }
   }
 
-  class Response(val attrs: List[List[Attr]]) {
+  case class Response(val attrs: List[List[Attr]]) {
     override def toString = attrs.map(_.mkString(";")).mkString("\t") + "\n"
   }
 
@@ -65,10 +66,11 @@ object Connection {
       val body = if (bodyOrNull == null) "" else bodyOrNull
       val lines = body.split("\t").filter(!_.isEmpty).toList
       val resp = lines.map(l => l.split(";").toList).map(attrs => attrs.map(Attr.from(_))).toList
-      new Response(resp)
+      Response(resp)
     }
   }
 
+  // wtf socket? how'bout Node
   case class Request(attrs: List[Attr], socket: Socket)
 
   object Request {

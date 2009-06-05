@@ -31,7 +31,7 @@ object NetAdm extends scala.actors.Actor {
             }
             NetAdm ! NewNode(node)
             pong
-          case TIMEOUT => Pang("timout")
+          case TIMEOUT => Pang("timeout")
         }
       case None => Pang("no such node")
     }
@@ -48,4 +48,42 @@ object NetAdm extends scala.actors.Actor {
   sealed abstract class PingResponse
   case object Pong extends PingResponse
   case class Pang(cause: String) extends PingResponse
+}
+
+object Monitor extends Connection.Server {
+  import scala.actors.Actor
+  import scala.actors.Actor._
+  import scala.collection.mutable.{HashMap, SynchronizedMap}
+  import java.net.Socket
+  import Connection._
+
+  var monitors = new HashMap[Node, List[Actor]]() with SynchronizedMap[Node, List[Actor]]
+
+  def monitorNode(node: Node) = {
+    require(node != Console.node)
+    if (!monitors.contains(node)) connectTo(node)
+    val listeners = monitors.getOrElse(node, List())
+    monitors + (node -> (self :: listeners))
+  }
+
+  private def connectTo(node: Node) {
+    val t = new Thread(new Runnable {
+      def run {
+        val conn = new Client(node.address, port)
+        conn.send(Nil)
+      }
+    })
+    t.setDaemon(true)
+    t.start
+  }
+
+  override val port = 6129
+
+  def exitHandler = (s: Socket) => { 
+    // FIXME send {nodedown,n2@nipert}
+  }
+
+  def actions = {
+    case r @ Request(_, _) => Response(Nil)
+  }
 }
