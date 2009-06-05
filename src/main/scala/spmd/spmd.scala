@@ -62,13 +62,7 @@ trait SpmdClient {
     if (findNode(name).isDefined) error("Node with name '" + name + "' already exists.")
     val port = scala.actors.remote.TcpService.generatePort
     val node = Node(name, address, port)
-    val t = new Thread(new Runnable {
-      def run {
-        conn.send(node.toAttrs)
-      }
-    })
-    t.setDaemon(true)
-    t.start
+    Util.spawnDaemon { conn.send(node.toAttrs) }
     node
   }
 
@@ -101,7 +95,7 @@ object Console extends SpmdClient {
     }
     node = registerNode(name, java.net.InetAddress.getLocalHost.getCanonicalHostName)
     Global.start
-//    Monitor.start
+//    Util.spawnDaemon { Monitor.start }
     NetAdm.start
 
     val script = getopt("-s")

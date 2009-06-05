@@ -56,7 +56,7 @@ object Monitor extends Connection.Server {
   import scala.collection.mutable.{HashMap, SynchronizedMap}
   import Connection._
 
-  var monitors = new HashMap[Node, List[Actor]]() with SynchronizedMap[Node, List[Actor]]
+  val monitors = new HashMap[Node, List[Actor]]() with SynchronizedMap[Node, List[Actor]]
 
   def monitorNode(node: Node) = {
     require(node != Console.node)
@@ -66,14 +66,9 @@ object Monitor extends Connection.Server {
   }
 
   private def connectTo(node: Node) {
-    val t = new Thread(new Runnable {
-      def run {
-        val conn = new Client(node.address, port)
-        conn.send(Nil)
-      }
-    })
-    t.setDaemon(true)
-    t.start
+    Util.spawnDaemon {
+      new Client(node.address, port).send(Nil)
+    }
   }
 
   override val port = 6129
