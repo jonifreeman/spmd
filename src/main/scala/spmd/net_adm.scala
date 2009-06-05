@@ -13,7 +13,7 @@ object NetAdm extends scala.actors.Actor {
     loop { receive { 
       case Ping(other) => 
         newKnownNode(other)
-        reply(Pong) 
+        reply(Pong(Console.node)) 
       case NewNode(node) => newKnownNode(node)
     }}
   }
@@ -24,7 +24,7 @@ object NetAdm extends scala.actors.Actor {
         val targetNetAdm = select('net_adm, node)
         targetNetAdm ! Ping(Console.node)
         self.receiveWithin(1000) {
-          case pong @ Pong => 
+          case pong @ Pong(_) => 
             knownNodes.foreach { n =>
               select('net_adm, n) ! NewNode(node)
               targetNetAdm ! NewNode(n)
@@ -46,7 +46,7 @@ object NetAdm extends scala.actors.Actor {
   case class NewNode(node: Node)
 
   sealed abstract class PingResponse
-  case object Pong extends PingResponse
+  case class Pong(node: Node) extends PingResponse
   case class Pang(cause: String) extends PingResponse
 }
 
