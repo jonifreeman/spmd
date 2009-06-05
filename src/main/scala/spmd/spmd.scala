@@ -4,17 +4,17 @@ import Connection._
 
 object Spmd extends Server with SpmdClient {
   import scala.collection.mutable.{HashMap, SynchronizedMap}
-  import java.net.Socket
 
-  val knownNodes = new HashMap[Socket, Node]() with SynchronizedMap[Socket, Node]
+  // FIXME, can as well be a list or set
+  val knownNodes = new HashMap[Address, Node]() with SynchronizedMap[Address, Node]
 
-  def exitHandler = (s: Socket) => { knownNodes -= s }
+  def exitHandler = (a: Address) => { knownNodes -= a }
   def actions = {
-    case Request(Attr("name", n) :: Attr("address", a) :: Attr("port", p) :: Nil, s) => 
-      knownNodes += (s -> Node(n, a, p.toInt))
+    case Request(client, Attr("name", n) :: Attr("address", a) :: Attr("port", p) :: Nil) => 
+      knownNodes += (client -> Node(n, a, p.toInt))
       Response(List(Attr("name", n)) :: Nil)
-    case Request(Attr("nodes", _) :: Nil, _) => Response(knownNodes.values.toList.map(_.toAttrs))
-    case Request(Attr("kill", _) :: Nil, _) => exit(0)
+    case Request(_, Attr("nodes", _) :: Nil) => Response(knownNodes.values.toList.map(_.toAttrs))
+    case Request(_, Attr("kill", _) :: Nil) => exit(0)
   }
 
   def main(args: Array[String]) = {
@@ -101,7 +101,7 @@ object Console extends SpmdClient {
     }
     node = registerNode(name, java.net.InetAddress.getLocalHost.getCanonicalHostName)
     Global.start
-    Monitor.start
+//    Monitor.start
     NetAdm.start
 
     val script = getopt("-s")

@@ -21,7 +21,7 @@ object Connection {
   
   trait Server {
     def actions: PartialFunction[Request, Response]
-    def exitHandler: Socket => Any
+    def exitHandler: Address => Any
     val notFound: PartialFunction[Request, Response] = { case _ => new Response(Nil) }
     val port = 6128
 
@@ -38,10 +38,11 @@ object Connection {
       override def run {
         val out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream))
         val in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream))
+        val clientAddress = Address.from(clientSocket)
 
         try {
           while (true) {
-            val req = Request(Request.from(in), clientSocket)
+            val req = Request.from(in, clientAddress)
             val action = actions.orElse(notFound)
             val res = action(req)
             out.write(res.toString)
@@ -50,9 +51,17 @@ object Connection {
         } catch {
           case e: IOException => // ok, client closed the connection
         } finally {
-          exitHandler(clientSocket)
+          exitHandler(clientAddress)
         }
       }
+    }
+  }
+
+  case class Address(address: String, port: Int)
+  case object Address {
+    def from(socket: Socket) = {
+      val inetAddr = socket.getRemoteSocketAddress.asInstanceOf[InetSocketAddress]
+      new Address(inetAddr.getAddress.getHostName, inetAddr.getPort)
     }
   }
 
@@ -70,14 +79,14 @@ object Connection {
     }
   }
 
-  // wtf socket? how'bout Node
-  case class Request(attrs: List[Attr], socket: Socket)
+  case class Request(client: Address, attrs: List[Attr])
 
   object Request {
-    def from(in: BufferedReader) = {
+    def from(in: BufferedReader, address: Address) = {
       val bodyOrNull = in.readLine
       val body = if (bodyOrNull == null) "" else bodyOrNull
-      body.split(";").map(Attr.from(_)).toList
+      val attrs = body.split(";").map(Attr.from(_)).toList
+      new Request(address, attrs)
     }
   }
 

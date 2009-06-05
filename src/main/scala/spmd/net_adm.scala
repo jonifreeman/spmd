@@ -54,7 +54,6 @@ object Monitor extends Connection.Server {
   import scala.actors.Actor
   import scala.actors.Actor._
   import scala.collection.mutable.{HashMap, SynchronizedMap}
-  import java.net.Socket
   import Connection._
 
   var monitors = new HashMap[Node, List[Actor]]() with SynchronizedMap[Node, List[Actor]]
@@ -79,7 +78,7 @@ object Monitor extends Connection.Server {
 
   override val port = 6129
 
-  def exitHandler = (s: Socket) => { 
+  def exitHandler = (a: Address) => { 
     // FIXME send {nodedown,n2@nipert}
   }
 
