@@ -19,9 +19,9 @@ object Spmd extends Server with SpmdClient {
   def main(args: Array[String]) = {
     try {
       if (args.toList.exists(_ == "-kill"))
-        conn.send(List(Attr("kill", "")))
+        send(List(Attr("kill", "")))
       else if (args.toList.exists(_ == "-names"))
-        println(conn.send(List(Attr("nodes", ""))))
+        println(send(List(Attr("nodes", ""))))
       else 
         start
     } catch {
@@ -47,18 +47,20 @@ object Node {
 }
 
 trait SpmdClient {
-  val conn = new Client("localhost", 6128)
+  private val conn = new Client("localhost", 6128)
 
-  def nodes(hostname: String): List[Node] = {
-    val remote = new Client(hostname, 6128)
+  def nodes(hostname: String): List[Node] = Node.fromResponse(send(List(Attr("nodes", ""))))
+  def send(attrs: List[Attr]): Response = send(attrs, "localhost")
+
+  private def send(attrs: List[Attr], hostname: String): Response = { 
+    val client = new Client(hostname, 6128)
     try {
-      nodes(remote)
+      client.send(attrs)
     } finally {
-      remote.close
+      client.close
     }
   }
-  def nodes: List[Node] = nodes(conn)
-  private def nodes(c: Client) = Node.fromResponse(conn.send(List(Attr("nodes", ""))))
+  def nodes: List[Node] = nodes("localhost")
 
   def registerNode(name: String, address: String): Node = {
     if (findNode(name).isDefined) error("Node with name '" + name + "' already exists.")

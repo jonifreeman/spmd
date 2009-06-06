@@ -11,3 +11,9 @@ object Util {
     t.start
   }
 }
+
+trait Log {
+  def debug(msg: String) {
+    if (System.getProperty("spmd.debug") != null) println(msg)
+  }
+}

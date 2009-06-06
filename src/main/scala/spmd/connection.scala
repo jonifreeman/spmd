@@ -59,7 +59,7 @@ object Connection {
         try {
           loop
         } catch {
-          case t => exitHandler(clientAddress)
+          case t => /*t.printStackTrace;*/ exitHandler(clientAddress)
         }
       }
     }

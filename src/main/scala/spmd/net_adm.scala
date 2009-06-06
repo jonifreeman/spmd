@@ -1,6 +1,6 @@
 package spmd
 
-object NetAdm extends scala.actors.Actor {
+object NetAdm extends scala.actors.Actor with Log {
   import scala.collection.mutable.LinkedHashSet
   import scala.actors.Actor._
   import scala.actors.TIMEOUT
@@ -14,12 +14,13 @@ object NetAdm extends scala.actors.Actor {
   }
 
   def act = {
-    register('net_adm, this)    
+    register('net_adm, this)
     loop { receive { 
       case Ping(other) => 
         newKnownNode(other)
         reply(Pong(Console.node)) 
       case NewNode(node) => newKnownNode(node)
+      case NodeDown(node) => debug("node down: " + node); knownNodes -= node
     }}
   }
 
@@ -42,6 +43,7 @@ object NetAdm extends scala.actors.Actor {
     }
   }
 
+  def node: Node = Console.node
   def nodes: List[Node] = knownNodes.toList
   def monitorNode(nodeName: String): PingResponse = ping(nodeName) match {
     case p @ Pong(node) => Monitor.monitorNode(node); p
@@ -49,7 +51,10 @@ object NetAdm extends scala.actors.Actor {
   }
 
   private def newKnownNode(other: Node) = 
-    if (other != Console.node) knownNodes += other 
+    if (other != Console.node && !knownNodes.contains(other)) {
+      knownNodes += other 
+      Monitor.monitorNode(other)
+    }
 
   case class Ping(other: Node)
   case class NewNode(node: Node)
@@ -57,6 +62,8 @@ object NetAdm extends scala.actors.Actor {
   sealed abstract class PingResponse
   case class Pong(node: Node) extends PingResponse
   case class Pang(cause: String) extends PingResponse
+
+  case class NodeDown(node: Node)
 
   private object Monitor extends Connection.Server {
     import scala.actors.Actor
@@ -95,7 +102,7 @@ object NetAdm extends scala.actors.Actor {
     def exitHandler = (addrOfCrashedNode: Address) => { 
       monitors(addrOfCrashedNode).foreach { monitorActor =>
         val crashedNode = monitoredNodes(addrOfCrashedNode)
-        monitorActor ! ('nodedown, crashedNode)
+        monitorActor ! NodeDown(crashedNode)
       }
       monitors -= addrOfCrashedNode
       monitoredNodes -= addrOfCrashedNode
@@ -109,4 +116,3 @@ object NetAdm extends scala.actors.Actor {
     }
   }
 }
-
