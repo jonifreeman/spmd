@@ -72,6 +72,7 @@ object Monitor extends Connection.Server {
   private def connectionEstablished(node: Node) = monitoredNodes.values.contains(node)
   private def addrOf(node: Node) = (for ((a, n) <- monitoredNodes if n == node) yield a).toList.head
 
+  // FIXME this request should be closed
   private def requestConnectionFrom(monitoredNode: Node): Address =
     new Client(monitoredNode.address, monitoredNode.monitorPort).send(Console.node.toAttrs) match {
       case Response(List(List(Attr("address", a), Attr("port", p)))) => Address(a, p.toInt)
@@ -85,8 +86,8 @@ object Monitor extends Connection.Server {
       val crashedNode = monitoredNodes(addrOfCrashedNode)
       monitorActor ! ('nodedown, crashedNode)
     }
-
-    // FIXME cleanup datastructures
+    monitors -= addrOfCrashedNode
+    monitoredNodes -= addrOfCrashedNode
   }
 
   def actions = {
