@@ -69,11 +69,12 @@ object NetAdm extends scala.actors.Actor with Log {
   private object Monitor extends Connection.Server {
     import scala.actors.Actor
     import scala.actors.Actor._
-    import scala.collection.mutable.{HashMap, SynchronizedMap}
+    import scala.collection.mutable.{HashMap, SynchronizedMap, ArrayBuffer, SynchronizedBuffer}
     import Connection._
 
     val monitoredNodes = new HashMap[Address, Node]() with SynchronizedMap[Address, Node]
     val monitors = new HashMap[Address, List[Actor]]() with SynchronizedMap[Address, List[Actor]]
+    val outlinks = new ArrayBuffer[Client]() with SynchronizedBuffer[Client]
 
     def monitorNode(remote: Node) {
       require(remote != Console.node)
@@ -112,7 +113,9 @@ object NetAdm extends scala.actors.Actor with Log {
     def actions = {
       case Request(_, Attr("name", n) :: Attr("address", a) :: Attr("port", p) :: Attr("monitorPort", m) :: Nil) => 
         val monitor = Node(n, a, p.toInt, m.toInt)
-        new Client(monitor.address, monitor.monitorPort).send(Nil)
+        val outlink = new Client(monitor.address, monitor.monitorPort)
+        outlinks += outlink
+        outlink.send(Nil)
       case Request(client, _) => Response(client.toAttrs :: Nil)
     }
   }
