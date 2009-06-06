@@ -16,7 +16,12 @@ object Connection {
       Response.from(in)
     }
 
-    def close = socket.close
+    /** Closes the connection in a controlled way. Server will not execute exitHandler.
+     */
+    def close = {
+      send(List(Attr("_close", "now")))
+      socket.close
+    }
   }
   
   trait Server {
@@ -43,15 +48,19 @@ object Connection {
         try {
           while (true) {
             val req = Request.from(in, clientAddress)
-            val action = actions.orElse(notFound)
-            val res = action(req)
-            out.write(res.toString)
-            out.flush
+            req match {
+              case Request(_, List(Attr("_close", "now"))) => 
+                clientSocket.close
+                return
+              case _ =>
+                val action = actions.orElse(notFound)
+                val res = action(req)
+                out.write(res.toString)
+                out.flush
+            }
           }
         } catch {
-          case e: IOException => // ok, client closed the connection
-        } finally {
-          exitHandler(clientAddress)
+          case t => exitHandler(clientAddress)
         }
       }
     }
