@@ -45,20 +45,19 @@ object Connection {
         val in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream))
         val clientAddress = Address.from(clientSocket)
 
-        try {
-          while (true) {
-            val req = Request.from(in, clientAddress)
-            req match {
-              case Request(_, List(Attr("_close", "now"))) => 
-                clientSocket.close
-                return
-              case _ =>
-                val action = actions.orElse(notFound)
-                val res = action(req)
-                out.write(res.toString)
-                out.flush
-            }
+        def loop: Unit = 
+          Request.from(in, clientAddress) match {
+            case Request(_, List(Attr("_close", "now"))) => clientSocket.close
+            case req =>
+              val action = actions.orElse(notFound)
+              val res = action(req)
+              out.write(res.toString)
+              out.flush
+              loop
           }
+          
+        try {
+          loop
         } catch {
           case t => exitHandler(clientAddress)
         }
