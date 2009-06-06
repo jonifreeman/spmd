@@ -6,7 +6,11 @@ import scala.io.Source
 
 object Connection {
   class Client(addr: String, port: Int) {
-    lazy val socket = new Socket(addr, port)
+    lazy val socket = {
+      val s = new Socket(addr, port)
+      s.setKeepAlive(true)
+      s
+    }
     lazy val out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream))
     lazy val in = socket.getInputStream
 
