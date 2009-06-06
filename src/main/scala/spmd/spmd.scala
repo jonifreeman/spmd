@@ -98,7 +98,6 @@ object Console extends SpmdClient {
     }
     node = registerNode(name, java.net.InetAddress.getLocalHost.getCanonicalHostName)
     Global.start
-    Util.spawnDaemon { Monitor.start }
     NetAdm.start
 
     val script = getopt("-s")

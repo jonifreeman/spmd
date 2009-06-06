@@ -8,6 +8,11 @@ object NetAdm extends scala.actors.Actor {
 
   private val knownNodes = new LinkedHashSet[Node]
 
+  override def start = {
+    Util.spawnDaemon { Monitor.start }
+    super.start
+  }
+
   def act = {
     register('net_adm, this)    
     loop { receive { 
@@ -38,6 +43,7 @@ object NetAdm extends scala.actors.Actor {
   }
 
   def nodes: List[Node] = knownNodes.toList
+  def monitorNode(node: Node) = Monitor.monitorNode(node)
 
   private def newKnownNode(other: Node) = 
     if (other != Console.node) knownNodes += other 
@@ -48,52 +54,53 @@ object NetAdm extends scala.actors.Actor {
   sealed abstract class PingResponse
   case class Pong(node: Node) extends PingResponse
   case class Pang(cause: String) extends PingResponse
-}
 
-object Monitor extends Connection.Server {
-  import scala.actors.Actor
-  import scala.actors.Actor._
-  import scala.collection.mutable.{HashMap, SynchronizedMap}
-  import Connection._
+  private object Monitor extends Connection.Server {
+    import scala.actors.Actor
+    import scala.actors.Actor._
+    import scala.collection.mutable.{HashMap, SynchronizedMap}
+    import Connection._
 
-  val monitoredNodes = new HashMap[Address, Node]() with SynchronizedMap[Address, Node]
-  val monitors = new HashMap[Address, List[Actor]]() with SynchronizedMap[Address, List[Actor]]
+    val monitoredNodes = new HashMap[Address, Node]() with SynchronizedMap[Address, Node]
+    val monitors = new HashMap[Address, List[Actor]]() with SynchronizedMap[Address, List[Actor]]
 
-  def monitorNode(node: Node) {
-    require(node != Console.node)
-    val addrOfMonitoredNode = 
-      if (!connectionEstablished(node)) requestConnectionFrom(node)
-      else addrOf(node)
-    val listeners = monitors.getOrElse(addrOfMonitoredNode, List())
-    monitors + (addrOfMonitoredNode -> (self :: listeners))
-    monitoredNodes + (addrOfMonitoredNode -> node)
-  }
-
-  private def connectionEstablished(node: Node) = monitoredNodes.values.contains(node)
-  private def addrOf(node: Node) = (for ((a, n) <- monitoredNodes if n == node) yield a).toList.head
-
-  // FIXME this request should be closed
-  private def requestConnectionFrom(monitoredNode: Node): Address =
-    new Client(monitoredNode.address, monitoredNode.monitorPort).send(Console.node.toAttrs) match {
-      case Response(List(List(Attr("address", a), Attr("port", p)))) => Address(a, p.toInt)
-      case Response(x) => error(x.toString)
+    def monitorNode(node: Node) {
+      require(node != Console.node)
+      val addrOfMonitoredNode = 
+        if (!connectionEstablished(node)) requestConnectionFrom(node)
+        else addrOf(node)
+      val listeners = monitors.getOrElse(addrOfMonitoredNode, List())
+      monitors + (addrOfMonitoredNode -> (self :: listeners))
+      monitoredNodes + (addrOfMonitoredNode -> node)
     }
 
-  override val port = Console.node.monitorPort
+    private def connectionEstablished(node: Node) = monitoredNodes.values.contains(node)
+    private def addrOf(node: Node) = (for ((a, n) <- monitoredNodes if n == node) yield a).toList.head
 
-  def exitHandler = (addrOfCrashedNode: Address) => { 
-    monitors(addrOfCrashedNode).foreach { monitorActor =>
-      val crashedNode = monitoredNodes(addrOfCrashedNode)
-      monitorActor ! ('nodedown, crashedNode)
+    // FIXME this request should be closed
+    private def requestConnectionFrom(monitoredNode: Node): Address =
+      new Client(monitoredNode.address, monitoredNode.monitorPort).send(Console.node.toAttrs) match {
+        case Response(List(List(Attr("address", a), Attr("port", p)))) => Address(a, p.toInt)
+        case Response(x) => error(x.toString)
+      }
+
+    override val port = Console.node.monitorPort
+
+    def exitHandler = (addrOfCrashedNode: Address) => { 
+      monitors(addrOfCrashedNode).foreach { monitorActor =>
+        val crashedNode = monitoredNodes(addrOfCrashedNode)
+        monitorActor ! ('nodedown, crashedNode)
+      }
+      monitors -= addrOfCrashedNode
+      monitoredNodes -= addrOfCrashedNode
     }
-    monitors -= addrOfCrashedNode
-    monitoredNodes -= addrOfCrashedNode
-  }
 
-  def actions = {
-    case Request(_, Attr("name", n) :: Attr("address", a) :: Attr("port", p) :: Attr("monitorPort", m) :: Nil) => 
-      val monitor = Node(n, a, p.toInt, m.toInt)
-      new Client(monitor.address, monitor.monitorPort).send(Nil)
-    case Request(client, _) => Response(client.toAttrs :: Nil)
+    def actions = {
+      case Request(_, Attr("name", n) :: Attr("address", a) :: Attr("port", p) :: Attr("monitorPort", m) :: Nil) => 
+        val monitor = Node(n, a, p.toInt, m.toInt)
+        new Client(monitor.address, monitor.monitorPort).send(Nil)
+      case Request(client, _) => Response(client.toAttrs :: Nil)
+    }
   }
 }
+
