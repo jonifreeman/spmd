@@ -1,6 +1,6 @@
 package spmd
 
-object NetAdm extends scala.actors.Actor with Log {
+object NetAdm extends Log {
   import scala.collection.mutable.LinkedHashSet
   import scala.actors.Actor._
   import scala.actors.TIMEOUT
@@ -8,20 +8,22 @@ object NetAdm extends scala.actors.Actor with Log {
 
   private val knownNodes = new LinkedHashSet[Node]
 
-  override def start = {
+  def start = {
     Util.spawnDaemon { Monitor.start }
-    super.start
+    NetAdmActor.start
   }
 
-  def act = {
-    register('net_adm, this)
-    loop { receive { 
-      case Ping(other) => 
-        newKnownNode(other)
-        reply(Pong(Console.node)) 
-      case NewNode(other) => newKnownNode(other)
-      case NodeDown(other) => debug("node down: " + other); knownNodes -= other
-    }}
+  object NetAdmActor extends scala.actors.Actor {
+    def act = {
+      register('net_adm, this)
+      loop { receive { 
+        case Ping(other) => 
+          newKnownNode(other)
+          reply(Pong(Console.node)) 
+        case NewNode(other) => newKnownNode(other)
+        case NodeDown(other) => debug("node down: " + other); knownNodes -= other
+      }}
+    }
   }
 
   def ping(nodeName: String): PingResponse = {
@@ -35,7 +37,7 @@ object NetAdm extends scala.actors.Actor with Log {
               select('net_adm, n) ! NewNode(remote)
               targetNetAdm ! NewNode(n)
             }
-            NetAdm ! NewNode(remote)
+            NetAdmActor ! NewNode(remote)
             pong
           case TIMEOUT => Pang("timeout")
         }
