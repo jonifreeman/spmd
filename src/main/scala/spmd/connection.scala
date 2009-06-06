@@ -53,7 +53,7 @@ object Connection {
 
         def loop: Unit = 
           Request.from(in, clientAddress) match {
-            case Request(_, List(Attr("_close", "now"))) => clientSocket.close
+            case Request(_, List(Attr("_close", "now"))) => 
             case req =>
               val action = actions.orElse(notFound)
               val res = action(req)
