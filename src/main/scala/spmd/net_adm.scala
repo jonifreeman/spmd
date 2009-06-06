@@ -43,7 +43,10 @@ object NetAdm extends scala.actors.Actor {
   }
 
   def nodes: List[Node] = knownNodes.toList
-  def monitorNode(node: Node) = Monitor.monitorNode(node)
+  def monitorNode(nodeName: String) = ping(nodeName) match {
+    case Pong(node) => Monitor.monitorNode(node)
+    case p @ Pang(_) => p
+  }
 
   private def newKnownNode(other: Node) = 
     if (other != Console.node) knownNodes += other 
