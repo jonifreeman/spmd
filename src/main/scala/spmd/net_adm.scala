@@ -53,6 +53,7 @@ object NetAdm extends scala.actors.Actor with Log {
   private def newKnownNode(other: Node) = 
     if (other != Console.node && !knownNodes.contains(other)) {
       knownNodes += other 
+      debug("starting to monitor new node " + other)
       Monitor.monitorNode(other)
     }
 
