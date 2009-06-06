@@ -19,23 +19,23 @@ object NetAdm extends scala.actors.Actor with Log {
       case Ping(other) => 
         newKnownNode(other)
         reply(Pong(Console.node)) 
-      case NewNode(node) => newKnownNode(node)
-      case NodeDown(node) => debug("node down: " + node); knownNodes -= node
+      case NewNode(other) => newKnownNode(other)
+      case NodeDown(other) => debug("node down: " + other); knownNodes -= other
     }}
   }
 
   def ping(nodeName: String): PingResponse = {
     Console.findNode(nodeName) match {
-      case Some(node) =>
-        val targetNetAdm = select('net_adm, node)
+      case Some(remote) =>
+        val targetNetAdm = select('net_adm, remote)
         targetNetAdm ! Ping(Console.node)
         self.receiveWithin(1000) {
           case pong @ Pong(_) => 
             knownNodes.foreach { n =>
-              select('net_adm, n) ! NewNode(node)
+              select('net_adm, n) ! NewNode(remote)
               targetNetAdm ! NewNode(n)
             }
-            NetAdm ! NewNode(node)
+            NetAdm ! NewNode(remote)
             pong
           case TIMEOUT => Pang("timeout")
         }
@@ -46,7 +46,7 @@ object NetAdm extends scala.actors.Actor with Log {
   def node: Node = Console.node
   def nodes: List[Node] = knownNodes.toList
   def monitorNode(nodeName: String): PingResponse = ping(nodeName) match {
-    case p @ Pong(node) => Monitor.monitorNode(node); p
+    case p @ Pong(remote) => Monitor.monitorNode(remote); p
     case p @ Pang(_) => p
   }
 
@@ -58,13 +58,13 @@ object NetAdm extends scala.actors.Actor with Log {
     }
 
   case class Ping(other: Node)
-  case class NewNode(node: Node)
+  case class NewNode(other: Node)
 
   sealed abstract class PingResponse
   case class Pong(node: Node) extends PingResponse
   case class Pang(cause: String) extends PingResponse
 
-  case class NodeDown(node: Node)
+  case class NodeDown(other: Node)
 
   private object Monitor extends Connection.Server {
     import scala.actors.Actor
@@ -75,18 +75,18 @@ object NetAdm extends scala.actors.Actor with Log {
     val monitoredNodes = new HashMap[Address, Node]() with SynchronizedMap[Address, Node]
     val monitors = new HashMap[Address, List[Actor]]() with SynchronizedMap[Address, List[Actor]]
 
-    def monitorNode(node: Node) {
-      require(node != Console.node)
+    def monitorNode(remote: Node) {
+      require(remote != Console.node)
       val addrOfMonitoredNode = 
-        if (!connectionEstablished(node)) requestConnectionFrom(node)
-        else addrOf(node)
+        if (!connectionEstablished(remote)) requestConnectionFrom(remote)
+        else addrOf(remote)
       val listeners = monitors.getOrElse(addrOfMonitoredNode, List())
       monitors + (addrOfMonitoredNode -> (self :: listeners))
-      monitoredNodes + (addrOfMonitoredNode -> node)
+      monitoredNodes + (addrOfMonitoredNode -> remote)
     }
 
-    private def connectionEstablished(node: Node) = monitoredNodes.values.contains(node)
-    private def addrOf(node: Node) = (for ((a, n) <- monitoredNodes if n == node) yield a).toList.head
+    private def connectionEstablished(remote: Node) = monitoredNodes.values.contains(remote)
+    private def addrOf(remote: Node) = (for ((a, n) <- monitoredNodes if n == remote) yield a).toList.head
 
     private def requestConnectionFrom(monitoredNode: Node): Address = {
       val client = new Client(monitoredNode.address, monitoredNode.monitorPort)

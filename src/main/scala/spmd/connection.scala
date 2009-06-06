@@ -24,6 +24,8 @@ object Connection {
      */
     def close = {
       send(List(Attr("_close", "now")))
+      out.close
+      in.close
       socket.close
     }
   }
@@ -65,6 +67,9 @@ object Connection {
         } catch {
           case t => /*t.printStackTrace;*/ exitHandler(clientAddress)
         }
+        out.close
+        in.close
+        clientSocket.close
       }
     }
   }
