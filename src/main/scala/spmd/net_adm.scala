@@ -56,32 +56,43 @@ object Monitor extends Connection.Server {
   import scala.collection.mutable.{HashMap, SynchronizedMap}
   import Connection._
 
-  val monitors = new HashMap[Node, List[Actor]]() with SynchronizedMap[Node, List[Actor]]
+  val monitoredNodes = new HashMap[Address, Node]() with SynchronizedMap[Address, Node]
+  val monitors = new HashMap[Address, List[Actor]]() with SynchronizedMap[Address, List[Actor]]
 
   def monitorNode(node: Node) {
     require(node != Console.node)
-    if (!monitors.contains(node)) requestConnectionFrom(node)
-    val listeners = monitors.getOrElse(node, List())
-    monitors + (node -> (self :: listeners))
+    val addrOfMonitoredNode = 
+      if (!connectionEstablished(node)) requestConnectionFrom(node)
+      else addrOf(node)
+    val listeners = monitors.getOrElse(addrOfMonitoredNode, List())
+    monitors + (addrOfMonitoredNode -> (self :: listeners))
+    monitoredNodes + (addrOfMonitoredNode -> node)
   }
 
-  private def requestConnectionFrom(monitoredNode: Node) =
-    new Client(monitoredNode.address, monitoredNode.monitorPort).send(Console.node.toAttrs)
+  private def connectionEstablished(node: Node) = monitoredNodes.values.contains(node)
+  private def addrOf(node: Node) = (for ((a, n) <- monitoredNodes if n == node) yield a).toList.head
+
+  private def requestConnectionFrom(monitoredNode: Node): Address =
+    new Client(monitoredNode.address, monitoredNode.monitorPort).send(Console.node.toAttrs) match {
+      case Response(List(List(Attr("address", a), Attr("port", p)))) => Address(a, p.toInt)
+      case Response(x) => error(x.toString)
+    }
 
   override val port = Console.node.monitorPort
 
-  def exitHandler = (a: Address) => { 
-    def findByAddr = monitors.filterKeys(n => n.address == a.address && n.port == a.port)
-    findByAddr.foreach { monitors =>
-      val (crashedNode, actors) = monitors
-      actors.foreach { _ ! ('nodedown, crashedNode) }
+  def exitHandler = (addrOfCrashedNode: Address) => { 
+    monitors(addrOfCrashedNode).foreach { monitorActor =>
+      val crashedNode = monitoredNodes(addrOfCrashedNode)
+      monitorActor ! ('nodedown, crashedNode)
     }
+
+    // FIXME cleanup datastructures
   }
 
   def actions = {
     case Request(_, Attr("name", n) :: Attr("address", a) :: Attr("port", p) :: Attr("monitorPort", m) :: Nil) => 
       val monitor = Node(n, a, p.toInt, m.toInt)
       new Client(monitor.address, monitor.monitorPort).send(Nil)
-    case _ => Response(Nil)
+    case Request(client, _) => Response(client.toAttrs :: Nil)
   }
 }

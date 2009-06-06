@@ -57,7 +57,10 @@ object Connection {
     }
   }
 
-  case class Address(address: String, port: Int)
+  case class Address(address: String, port: Int) {
+    def toAttrs = List(Attr("address", address), Attr("port", port.toString))
+  }
+
   case object Address {
     def from(socket: Socket) = {
       val inetAddr = socket.getRemoteSocketAddress.asInstanceOf[InetSocketAddress]
