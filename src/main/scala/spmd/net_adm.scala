@@ -60,13 +60,13 @@ object Monitor extends Connection.Server {
 
   def monitorNode(node: Node) {
     require(node != Console.node)
-    if (!monitors.contains(node)) connectTo(node)
+    if (!monitors.contains(node)) requestConnectionFrom(node)
     val listeners = monitors.getOrElse(node, List())
     monitors + (node -> (self :: listeners))
   }
 
-  private def connectTo(node: Node) =
-    new Client(node.address, node.monitorPort).send(Console.node.toAttrs)
+  private def requestConnectionFrom(monitoredNode: Node) =
+    new Client(monitoredNode.address, monitoredNode.monitorPort).send(Console.node.toAttrs)
 
   override val port = Console.node.monitorPort
 

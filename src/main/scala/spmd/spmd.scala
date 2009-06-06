@@ -5,7 +5,6 @@ import Connection._
 object Spmd extends Server with SpmdClient {
   import scala.collection.mutable.{HashMap, SynchronizedMap}
 
-  // FIXME, can as well be a list or set
   val knownNodes = new HashMap[Address, Node]() with SynchronizedMap[Address, Node]
 
   def exitHandler = (a: Address) => { knownNodes -= a }

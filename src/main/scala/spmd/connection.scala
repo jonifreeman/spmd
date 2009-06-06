@@ -74,7 +74,7 @@ object Connection {
       val bodyOrNull = new BufferedReader(new InputStreamReader(in)).readLine
       val body = if (bodyOrNull == null) "" else bodyOrNull
       val lines = body.split("\t").filter(!_.isEmpty).toList
-      val resp = lines.map(l => l.split(";").toList).map(attrs => attrs.map(Attr.from(_))).toList
+      val resp = lines.map(_.split(";").toList).map(attrs => attrs.map(Attr.from(_))).toList
       Response(resp)
     }
   }
