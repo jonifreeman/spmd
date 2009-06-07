@@ -55,7 +55,7 @@ object Node {
 trait SpmdClient {
   private val conn = new Client("localhost", 6128)
 
-  def nodes(hostname: String): List[Node] = Node.fromResponse(send(List(Attr("nodes", ""))))
+  def nodes(hostname: String): List[Node] = Node.fromResponse(send(List(Attr("nodes", "")), hostname))
   def send(attrs: List[Attr]): Response = send(attrs, "localhost")
 
   private def send(attrs: List[Attr], hostname: String): Response = { 

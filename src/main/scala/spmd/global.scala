@@ -14,10 +14,6 @@ object Global extends SpmdClient {
     RActor.select(RNode(node.address, node.port), 'globalNameServer)
 
   //def registeredNames = ()
-  // FIXME, we should not return all known nodes, just the nodes
-  // which form a partition (i.e. all nodes already known to them).
-  //def nodes = ()
-  //def ping(addr: String) = ()
 
   def start = actor {
     def loop(names: Set[Symbol]): Unit = receive {

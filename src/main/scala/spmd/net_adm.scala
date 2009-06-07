@@ -13,11 +13,12 @@ object NetAdm extends Log {
     NetAdmActor.start
   }
 
-  object NetAdmActor extends scala.actors.Actor {
+  private object NetAdmActor extends scala.actors.Actor {
     def act = {
       register('net_adm, this)
       loop { receive { 
         case Ping(other) => 
+          debug("got ping from " + other)
           newKnownNode(other)
           reply(Pong(Console.node)) 
         case NewNode(other) => newKnownNode(other)
@@ -31,8 +32,9 @@ object NetAdm extends Log {
       case Some(remote) =>
         val targetNetAdm = select('net_adm, remote)
         targetNetAdm ! Ping(Console.node)
-        self.receiveWithin(1000) {
-          case pong @ Pong(_) => 
+        self.receiveWithin(5000) {
+          case pong @ Pong(n) => 
+            debug("received pong from " + n)
             knownNodes.foreach { n =>
               select('net_adm, n) ! NewNode(remote)
               targetNetAdm ! NewNode(n)
