@@ -5,7 +5,7 @@ provides functions to manage the cluster. A *node* in the cluster is a JVM which
 to spmd process. Each node has a *name*, *network address*, and *port*. It is a responsibility
 of spmd to assign a free port to node for use when it registers itself. 
 
-Currently following features are offered (note, the scripts referred below has only been tested
+Currently following features are offered (note, the scripts refered below have only been tested
 with Ubuntu Linux, please provide patches for other systems):
 
 spmd
