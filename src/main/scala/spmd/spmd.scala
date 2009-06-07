@@ -21,7 +21,7 @@ object Spmd extends Server with SpmdClient {
       if (args.toList.exists(_ == "-kill"))
         send(List(Attr("kill", "")))
       else if (args.toList.exists(_ == "-names"))
-        println(send(List(Attr("nodes", ""))))
+        println(Node.fromResponse(send(List(Attr("nodes", "")))).mkString("\n"))
       else if (args.toList.exists(_ == "-help"))
         println("""
                 |-kill    - shutdown running spmd
