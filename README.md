@@ -35,7 +35,7 @@ Nodes can be connected by pinging them.
     $ node -name node2
 
     scala> import spmd.NetAdm._
-    scala> ping("node2")
+    scala> ping("node2@myhost")
     res0: spmd.NetAdm.PingResponse = Pong(Node(node2,myhost,8267,8465))
 
 Nodes form a cluster transitively (each node connects to all other nodes in a cluster,
@@ -43,7 +43,7 @@ support for other topologies are not yet implemented).
 
     $ node -name node3
     
-    scala> ping("node3")
+    scala> ping("node3@myhost")
     res1: spmd.NetAdm.PingResponse = Pong(Node(node3,myhost,8345,8389))
 
     scala> nodes        
@@ -83,7 +83,7 @@ Node monitoring
 
 Node can be monitored remotely from any other node.
 
-    scala> monitorNode("node3")
+    scala> monitorNode("node3@myhost")
     res6: spmd.NetAdm.PingResponse = Pong(Node(node3,myhost,8345,8389))
 
     scala> import scala.actors.Actor._
