@@ -78,12 +78,16 @@ trait SpmdClient {
   }
 
   def findNode(name: String): Option[Node] = {
-    def findByName(nodeName: String, nodes: List[Node]) = nodes.find(_.name == nodeName)
-    if (name.contains('@')) {
-      val elems = name.split('@')
-      findByName(elems(0), nodes(elems(1)))
+    val (nodeName, hostname) = fullName(name)
+    nodes(hostname).find(_.name == nodeName)
+  }
+
+  protected def fullName(nodeName: String) = {
+    if (nodeName.contains('@')) {
+      val elems = nodeName.split('@')
+      (elems(0), (elems(1)))
     }
-    else findByName(name, nodes)
+    else (nodeName, java.net.InetAddress.getLocalHost.getCanonicalHostName)
   }
 }
 
@@ -104,7 +108,8 @@ object Console extends SpmdClient {
       println("-name argument is required")
       exit(0)
     }
-    node = registerNode(name, java.net.InetAddress.getLocalHost.getCanonicalHostName)
+    val (nodeName, hostname) = fullName(name)
+    node = registerNode(nodeName, hostname)
     Global.start
     NetAdm.start
 

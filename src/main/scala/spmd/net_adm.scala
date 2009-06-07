@@ -31,6 +31,7 @@ object NetAdm extends Log {
     Console.findNode(nodeName) match {
       case Some(remote) =>
         val targetNetAdm = select('net_adm, remote)
+        debug("sending ping to " + targetNetAdm)
         targetNetAdm ! Ping(Console.node)
         self.receiveWithin(5000) {
           case pong @ Pong(n) => 

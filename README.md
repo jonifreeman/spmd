@@ -28,7 +28,8 @@ A node is started by giving a name for it and registering it to spmd.
 
     $ ./bin/node -name node1
 
-The name must be unique. A full name of a node is [given name]@[hostname].
+The name must be unique. A full name of a node is [given name]@[hostname]. It is also
+possible to give full name explicitely `node -name 'node1@192.168.0.100'`.
 Nodes can be connected by pinging them.
 
     $ ./bin/node -name node1
@@ -96,7 +97,7 @@ Node can be monitored remotely from any other node.
 TODO
 ----
 
-- Global name server
+- Proper global name server
 - Erlang cookie like security system
 - Hidden nodes
 - etc. etc.
