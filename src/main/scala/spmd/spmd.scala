@@ -22,6 +22,12 @@ object Spmd extends Server with SpmdClient {
         send(List(Attr("kill", "")))
       else if (args.toList.exists(_ == "-names"))
         println(send(List(Attr("nodes", ""))))
+      else if (args.toList.exists(_ == "-help"))
+        println("""
+                |-kill    - shutdown running spmd
+                |-names   - list all nodes registered to this spmd
+                |-help    - this help
+                """.stripMargin)
       else 
         start
     } catch {
@@ -81,7 +87,7 @@ trait SpmdClient {
   }
 }
 
-// FIXME move to own file 
+// FIXME move to own file + better programmatic API
 object Console extends SpmdClient {
   def main(args: Array[String]) = {
     start(args)
