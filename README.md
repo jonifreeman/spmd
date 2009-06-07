@@ -28,7 +28,7 @@ A node is started by giving a name for it and registering it to spmd.
 
     $ ./bin/node -name node1
 
-The name must be unique. The full name of the node is [given name]@[hostname].
+The name must be unique. A full name of a node is [given name]@[hostname].
 Nodes can be connected by pinging them.
 
     $ ./bin/node -name node1
