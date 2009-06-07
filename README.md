@@ -6,7 +6,7 @@ to spmd process. Each node has a *name*, *network address*, and *port*. It is a 
 of spmd to assign a free port to node for use when it registers itself. 
 
 Currently following features are offered (note, the scripts referred below has only been tested
-with Ububtu Linux, please provide patches for other systems):
+with Ubuntu Linux, please provide patches for other systems):
 
 spmd
 ----
@@ -15,7 +15,7 @@ Port mapper daemon which keeps track of local nodes and assigns free ports to th
 spmd is started automatically when first node on host starts (unless it is already running).
 
 
-    $ spmd -help
+    $ ./bin/spmd -help
 
     -kill    - shutdown running spmd
     -names   - list all nodes registered to this spmd
@@ -26,13 +26,13 @@ Nodes
 
 A node is started by giving a name for it and registering it to spmd.
 
-    $ node -name node1
+    $ ./bin/node -name node1
 
 The name must be unique. The full name of the node is [given name]@[hostname].
 Nodes can be connected by pinging them.
 
-    $ node -name node1
-    $ node -name node2
+    $ ./bin/node -name node1
+    $ ./bin/node -name node2
 
     scala> import spmd.NetAdm._
     scala> ping("node2@myhost")
@@ -41,7 +41,7 @@ Nodes can be connected by pinging them.
 Nodes form a cluster transitively (each node connects to all other nodes in a cluster,
 support for other topologies are not yet implemented).
 
-    $ node -name node3
+    $ ./bin/node -name node3
     
     scala> ping("node3@myhost")
     res1: spmd.NetAdm.PingResponse = Pong(Node(node3,myhost,8345,8389))
@@ -93,7 +93,6 @@ Node can be monitored remotely from any other node.
 
     Got message: NodeDown(Node(node3,myhost,8345,8389))
 
-
 TODO
 ----
 
@@ -101,4 +100,9 @@ TODO
 - Erlang cookie like security system
 - Hidden nodes
 - etc. etc.
+
+Compile
+-------
+
+    ./sbt compile
 
