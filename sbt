@@ -1,3 +1,4 @@
 #!/bin/sh
 
-scala -cp project/sbt-0.3.7.jar sbt.Main $*
+java -Xmx256M -jar project/sbt-launcher-0.4.6.jar "$@"
+
