@@ -13,6 +13,7 @@ object Spmd extends Server with SpmdClient {
       knownNodes += (client -> Node(n, a, p.toInt, m.toInt))
       Response(List(Attr("name", n)) :: Nil)
     case Request(_, Attr("nodes", _) :: Nil) => Response(knownNodes.values.toList.map(_.toAttrs))
+    case Request(_, Attr("ping", _) :: Nil) => Response(Nil)
     case Request(_, Attr("kill", _) :: Nil) => exit(0)
   }
 
@@ -28,12 +29,21 @@ object Spmd extends Server with SpmdClient {
                 |-names   - list all nodes registered to this spmd
                 |-help    - this help
                 """.stripMargin)
-      else 
-        start
+      else
+        startIfNotRunning
     } catch {
-      case e: java.net.ConnectException => println("spmd is not running")
+      case e: java.net.ConnectException => 
+        println("spmd is not running")
+        System.exit(0)
     }
   }
+
+  def startIfNotRunning =
+    try {
+      send(Attr("ping", " ") :: Nil)
+    } catch {
+      case e: java.net.ConnectException => start
+    }
 }
 
 // monitorPort can be removed if the port for Actor comm could be utilized

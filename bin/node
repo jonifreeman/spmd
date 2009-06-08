@@ -6,12 +6,7 @@ SPMD_DIR=`dirname $0`/..
 # FIXME should be lib/spmd-0.1.jar
 SPMD_JAR=$SPMD_DIR/target/classes
 
-# Start spmd if it is not running
-DAEMONS=`ps acx | grep -i spmd | wc -l`
-if [ $DAEMONS -lt "1" ]; then
-  $SPMD_DIR/bin/spmd &
-  sleep 1
-fi
+$SPMD_DIR/bin/spmd &
 
 ARGS=$@
 
