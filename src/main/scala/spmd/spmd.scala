@@ -32,9 +32,7 @@ object Spmd extends Server with SpmdClient {
       else
         startIfNotRunning
     } catch {
-      case e: java.net.ConnectException => 
-        println("spmd is not running")
-        System.exit(0)
+      case e: java.net.ConnectException => println("spmd is not running")
     }
   }
 
