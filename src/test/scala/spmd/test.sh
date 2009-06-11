@@ -1,5 +1,8 @@
 #!/bin/sh
 
+bin/spmd &
+sleep 1
+
 scala -cp target/classes:target/test-classes spmd.TestNode -name testnode1 &
 PID1=$!
 sleep 1
