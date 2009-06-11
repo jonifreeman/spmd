@@ -1,9 +1,9 @@
-Spmd is an attempt to bring Erlang like distributed actor features to Scala.
+Spmd is an attempt to bring Erlang style distributed actor features to Scala.
 
 A distributed system consists of connected *nodes*. Spmd keeps track of the nodes and
 provides functions to manage the cluster. A *node* in the cluster is a JVM which is registered
 to spmd process. Each node has a *name*, *network address*, and *port*. It is a responsibility
-of spmd to assign a free port to node for use when it registers itself. 
+of spmd to assign a free port for node to use when it registers itself. 
 
 Currently following features are offered (note, the scripts refered below have been tested
 with Ubuntu Linux and OSX, please provide patches for other systems):
@@ -28,8 +28,8 @@ A node is started by giving a name for it and registering it to spmd.
 
     $ ./bin/node -name node1
 
-The name must be unique. A full name of a node is [given name]@[hostname]. It is also
-possible to give full name explicitly `node -name 'node1@192.168.0.100'`.
+The name must be unique. A full name of a node is [given name]@[hostname]. Full name can be given 
+explicitly too: `node -name 'node1@192.168.0.100'`.
 Nodes can be connected by pinging them.
 
     $ ./bin/node -name node1
