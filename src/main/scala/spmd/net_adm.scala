@@ -3,7 +3,6 @@ package spmd
 object NetAdm extends Log {
   import scala.collection.mutable.LinkedHashSet
   import scala.actors.Actor._
-  import scala.actors.TIMEOUT
   import spmd.RemoteActor._
 
   private val knownNodes = new LinkedHashSet[Node]
@@ -32,9 +31,8 @@ object NetAdm extends Log {
       case Some(remote) =>
         val targetNetAdm = select('net_adm, remote)
         debug("sending ping to " + targetNetAdm)
-        targetNetAdm ! Ping(Console.node)
-        self.receiveWithin(5000) {
-          case pong @ Pong(n) => 
+        targetNetAdm !? (5000, Ping(Console.node)) match {
+          case Some(pong @ Pong(n)) => 
             debug("received pong from " + n)
             knownNodes.foreach { n =>
               select('net_adm, n) ! NewNode(remote)
@@ -42,7 +40,7 @@ object NetAdm extends Log {
             }
             NetAdmActor ! NewNode(remote)
             pong
-          case TIMEOUT => Pang("timeout")
+          case None => Pang("timeout")
         }
       case None => Pang("no such node")
     }
